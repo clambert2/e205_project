@@ -99,7 +99,7 @@ class AlphaBot2(object):
 if __name__=='__main__':
 
 	Ab = AlphaBot2()
-	Ab.forward()
+	Ab.left()
 	try:
 		while True:
 			time.sleep(1)
