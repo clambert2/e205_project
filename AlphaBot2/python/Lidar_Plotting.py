@@ -27,7 +27,8 @@ def run_lidar():
         lidar.stop()
         lidar.stop_motor()
         lidar.disconnect()
-
+        lidar.connect()
+        lidar.start_motor()
 
         for scan in lidar.iter_scans():
             print("\n🔄 New Scan:")
