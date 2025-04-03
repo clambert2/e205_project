@@ -25,7 +25,7 @@ def run_lidar():
     print("✅ Lidar connected! Reading data... (Press Ctrl+C to stop)")
 
     lidar.connect()
-    lidar.get_health()
+    print(lidar.get_health())
     lidar.start_motor()
 
     for scan in lidar.iter_scans():
