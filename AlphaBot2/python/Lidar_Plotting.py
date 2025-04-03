@@ -21,7 +21,7 @@ PORT_NAME = "/dev/ttyUSB0"  # Default for Raspberry Pi
 def run_lidar():
     """Reads and prints data from RP Lidar."""
 
-    lidar = RPLidar(PORT_NAME, baudrate=460800
+    lidar = RPLidar(PORT_NAME, baudrate=460800)
     print("✅ Lidar connected! Reading data... (Press Ctrl+C to stop)")
 
     lidar.connect()
@@ -29,10 +29,9 @@ def run_lidar():
     print(lidar.get_info())
     lidar.start_motor()
 
-    for scan in lidar.iter_scans():
-        print("\n🔄 New Scan:")
-        for (_, angle, distance) in scan:
-            print(f"Angle: {angle:.2f}°, Distance: {distance:.2f} mm")
+    scan = lidar.iter_scans()
+    print(scan)
+    print(list(scan))
 
     lidar.stop()
     lidar.stop_motor()
