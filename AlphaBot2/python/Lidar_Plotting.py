@@ -32,7 +32,7 @@ def run_lidar():
     time.sleep(10)
     scan = lidar.iter_scans()
     for s in scan:
-    	print(s)
+        print(s)
         break
 
 
