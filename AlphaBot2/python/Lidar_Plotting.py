@@ -24,6 +24,11 @@ def run_lidar():
         lidar = RPLidar(PORT_NAME, baudrate=115200)
         print("✅ Lidar connected! Reading data... (Press Ctrl+C to stop)")
 
+        lidar.stop()
+        lidar.stop_motor()
+        lidar.disconnect()
+
+
         for scan in lidar.iter_scans():
             print("\n🔄 New Scan:")
             for (_, angle, distance) in scan:
