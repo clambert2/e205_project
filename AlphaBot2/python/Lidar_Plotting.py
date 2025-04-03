@@ -7,6 +7,9 @@ PORT = '/dev/ttyUSB0'
 lidar = RPLidar(PORT)
 
 def get_scan_data():
-    return lidar.iter_scans()
+    for i, scan in enumerate(lidar.iter_scans()):
+        print(f"Scan {i+1}: {len(scan)} points")
+        process_scan(scan)
+    return scan
 
 print(get_scan_data())
