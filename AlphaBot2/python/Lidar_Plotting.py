@@ -29,7 +29,6 @@ def run_lidar():
     print(lidar.get_health())
     print(lidar.get_info())
     lidar.start_motor()
-    time.sleep(10)
     scan = lidar.iter_scans()
     for s in scan:
         print(s)
