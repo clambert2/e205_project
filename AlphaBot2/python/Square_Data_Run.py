@@ -1,10 +1,11 @@
 import time
+import csv
 from AlphaBot2 import AlphaBot2
 from rplidar import RPLidar
 from Lidar_Test import run_lidar
 
 if __name__ == "__main__":
-    
+
     # Create AlphaBot2 object
     Ab = AlphaBot2()
 
@@ -21,14 +22,37 @@ if __name__ == "__main__":
     # Create lidar scan list
     scan_list = []
 
+    # Movement parameters
+    forward_time = 0.5  # seconds
+    turn_time = 0.5  # seconds
+
+    # Move the robot and collect data
     for i in range(4):
         # Get Lidar scan data
-        lidar.append(lidar.iter_scans())
+        scan_list.append(lidar.iter_scans())
         Ab.forward()
-        time.sleep(1)
+        time.sleep(forward_time)
         Ab.stop()
+        scan_list.append(lidar.iter_scans())
+        time.sleep(1)
+        Ab.forward()
+        time.sleep(forward_time)
+        Ab.stop()
+        scan_list.append(lidar.iter_scans())
         time.sleep(1)
         Ab.right()
-        time.sleep(1)
+        time.sleep(turn_time)
         Ab.stop()
         time.sleep(1)
+
+    # Stop the Lidar and disconnect
+    lidar.stop()
+    lidar.stop_motor()
+    lidar.disconnect()
+
+    # # Save scan data to CSV file (new file for each scan)
+    # for i, scan in enumerate(scan_list):
+    #     with open(f'scan_{i}.csv', 'w', newline='') as file:
+    #         writer = csv.writer(file)
+    #         writer.writerow(['Confidence','Angle', 'Distance'])
+    #         writer.writerows(scan)
