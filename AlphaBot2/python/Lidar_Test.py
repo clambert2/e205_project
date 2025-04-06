@@ -17,14 +17,13 @@ def run_lidar(print_data=False):
     print(lidar.get_info())
     # Start the motor and collect a scaning
     lidar.start_motor()
-    scan = lidar.iter_scans()
+    scan = next(lidar.iter_scans())
 
     # Print the scan data
     if print_data:
-        for s in scan:
-            print(s[1])
+        for point in scan:
+            print(point)
             break
-    print(scan)
 
     # Stop the Lidar and disconnect
     lidar.stop()
