@@ -21,7 +21,9 @@ if __name__ == "__main__":
     print(lidar.get_health())
     time.sleep(1)
     lidar.start_motor()
-    # Create lidar scan list
+
+    # Create lidar scan list and initialize scan
+    scan = lidar.iter_scans()
     scan_list = []
 
     # Movement parameters
@@ -32,18 +34,18 @@ if __name__ == "__main__":
     for i in range(4):
         # Get Lidar scan data
         time.sleep(2)
-        scan_list.append(lidar.iter_scans())
+        scan_list.append(next(scan))
         Ab.forward()
         time.sleep(forward_time)
         Ab.stop()
         time.sleep(2)
-        scan_list.append(lidar.iter_scans())
+        scan_list.append(next(scan))
         time.sleep(1)
         Ab.forward()
         time.sleep(forward_time)
         Ab.stop()
         time.sleep(2)
-        scan_list.append(lidar.iter_scans())
+        scan_list.append(next(scan))
         time.sleep(1)
         Ab.right()
         time.sleep(turn_time)
