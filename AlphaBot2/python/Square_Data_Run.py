@@ -20,10 +20,8 @@ if __name__ == "__main__":
     print(lidar.get_info())
     print(lidar.get_health())
     time.sleep(1)
-    lidar.start_motor()
 
     # Create lidar scan list and initialize scan
-    scan = lidar.iter_scans()
     scan_list = []
 
     # Movement parameters
@@ -34,17 +32,26 @@ if __name__ == "__main__":
     for i in range(4):
         # Get Lidar scan data
         time.sleep(2)
+        lidar.stop()
+        lidar.start_motor()
+        scan = lidar.iter_scans()
         scan_list.append(next(scan))
         Ab.forward()
         time.sleep(forward_time)
         Ab.stop()
         time.sleep(2)
+        lidar.stop()
+        lidar.start_motor()
+        scan = lidar.iter_scans()
         scan_list.append(next(scan))
         time.sleep(1)
         Ab.forward()
         time.sleep(forward_time)
         Ab.stop()
         time.sleep(2)
+        lidar.stop()
+        lidar.start_motor()
+        scan = lidar.iter_scans()
         scan_list.append(next(scan))
         time.sleep(1)
         Ab.right()
@@ -61,4 +68,4 @@ if __name__ == "__main__":
         with open(f'scan_{i}.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['Confidence','Angle', 'Distance'])
-            writer.writerows(next(scan))
+            writer.writerows(scan)
