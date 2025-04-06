@@ -17,14 +17,16 @@ if __name__ == "__main__":
     lidar = RPLidar("/dev/ttyUSB0", baudrate=460800)
     lidar.stop()
     lidar.connect()
+    print(lidar.get_info())
+    print(lidar.get_health())
+    time.sleep(1)
     lidar.start_motor()
-
     # Create lidar scan list
     scan_list = []
 
     # Movement parameters
     forward_time = 0.5  # seconds
-    turn_time = 0.5  # seconds
+    turn_time = 0.2  # seconds
 
     # Move the robot and collect data
     for i in range(4):
