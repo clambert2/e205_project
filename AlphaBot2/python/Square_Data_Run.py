@@ -31,30 +31,32 @@ if __name__ == "__main__":
     # Move the robot and collect data
     for i in range(4):
         # Get Lidar scan data
+        time.sleep(2)
         scan_list.append(lidar.iter_scans())
         Ab.forward()
         time.sleep(forward_time)
         Ab.stop()
+        time.sleep(2)
         scan_list.append(lidar.iter_scans())
         time.sleep(1)
         Ab.forward()
         time.sleep(forward_time)
         Ab.stop()
+        time.sleep(2)
         scan_list.append(lidar.iter_scans())
         time.sleep(1)
         Ab.right()
         time.sleep(turn_time)
         Ab.stop()
-        time.sleep(1)
 
     # Stop the Lidar and disconnect
     lidar.stop()
     lidar.stop_motor()
     lidar.disconnect()
 
-    # # Save scan data to CSV file (new file for each scan)
-    # for i, scan in enumerate(scan_list):
-    #     with open(f'scan_{i}.csv', 'w', newline='') as file:
-    #         writer = csv.writer(file)
-    #         writer.writerow(['Confidence','Angle', 'Distance'])
-    #         writer.writerows(scan)
+    # Save scan data to CSV file (new file for each scan)
+    for i, scan in enumerate(scan_list):
+        with open(f'scan_{i}.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['Confidence','Angle', 'Distance'])
+            writer.writerows(scan)
