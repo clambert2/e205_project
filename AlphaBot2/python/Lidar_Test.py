@@ -34,4 +34,4 @@ def run_lidar(print_data=False):
     return scan
 
 if __name__ == "__main__":
-    run_lidar()
+    run_lidar(print_data = True)
