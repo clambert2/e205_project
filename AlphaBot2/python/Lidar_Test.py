@@ -22,9 +22,9 @@ def run_lidar(print_data=False):
     # Print the scan data
     if print_data:
         for s in scan:
-            print(s)
+            print(s[1])
             break
-    print(len(scan))
+    print(scan)
 
     # Stop the Lidar and disconnect
     lidar.stop()
