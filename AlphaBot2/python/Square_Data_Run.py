@@ -59,4 +59,4 @@ if __name__ == "__main__":
         with open(f'scan_{i}.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(['Confidence','Angle', 'Distance'])
-            writer.writerows(scan)
+            writer.writerows(next(scan))
