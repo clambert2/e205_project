@@ -3,6 +3,7 @@ import csv
 from AlphaBot2 import AlphaBot2
 from rplidar import RPLidar
 from Lidar_Test import run_lidar
+from Lidar_Test import run_lidar
 
 if __name__ == "__main__":
 
@@ -13,13 +14,13 @@ if __name__ == "__main__":
     Ab.PA = 20
     Ab.PB = 20
 
-    # Create Lidar object
-    lidar = RPLidar("/dev/ttyUSB0", baudrate=460800)
-    lidar.stop()
-    lidar.connect()
-    print(lidar.get_info())
-    print(lidar.get_health())
-    time.sleep(1)
+    # # Create Lidar object
+    # lidar = RPLidar("/dev/ttyUSB0", baudrate=460800)
+    # lidar.stop()
+    # lidar.connect()
+    # print(lidar.get_info())
+    # print(lidar.get_health())
+    # time.sleep(1)
 
     # Create lidar scan list and initialize scan
     scan_list = []
@@ -32,36 +33,36 @@ if __name__ == "__main__":
     for i in range(4):
         # Get Lidar scan data
         time.sleep(2)
-        lidar.stop()
-        lidar.start_motor()
-        scan = lidar.iter_scans()
-        scan_list.append(next(scan))
+        # lidar.stop()
+        # lidar.start_motor()
+        scan = run_lidar()
+        scan_list.append(scan)
         Ab.forward()
         time.sleep(forward_time)
         Ab.stop()
         time.sleep(2)
-        lidar.stop()
-        lidar.start_motor()
-        scan = lidar.iter_scans()
-        scan_list.append(next(scan))
+        # lidar.stop()
+        # lidar.start_motor()
+        scan = run_lidar()
+        scan_list.append(scan)
         time.sleep(1)
         Ab.forward()
         time.sleep(forward_time)
         Ab.stop()
         time.sleep(2)
-        lidar.stop()
-        lidar.start_motor()
-        scan = lidar.iter_scans()
-        scan_list.append(next(scan))
+        # lidar.stop()
+        # lidar.start_motor()
+        scan = run_lidar()
+        scan_list.append(scan)
         time.sleep(1)
         Ab.right()
         time.sleep(turn_time)
         Ab.stop()
 
-    # Stop the Lidar and disconnect
-    lidar.stop()
-    lidar.stop_motor()
-    lidar.disconnect()
+    # # Stop the Lidar and disconnect
+    # lidar.stop()
+    # lidar.stop_motor()
+    # lidar.disconnect()
 
     # Save scan data to CSV file (new file for each scan)
     for i, scan in enumerate(scan_list):
