@@ -1,72 +1,77 @@
 import time
 import csv
-from AlphaBot2 import AlphaBot2
 from rplidar import RPLidar
-from Lidar_Test import run_lidar
-from Lidar_Test import run_lidar
+import threading
 
-if __name__ == "__main__":
+# --- Thread class for collecting Lidar scans ---
+class LidarThread(threading.Thread):
+    def __init__(self, lidar, interval=1.0):
+        super().__init__()
+        self.lidar = lidar
+        self.interval = interval
+        self.running = True
+        self.lock = threading.Lock()
+        self.latest_scan = []
+        self.measure_iter = lidar.iter_measures()
 
-    # Create AlphaBot2 object
-    Ab = AlphaBot2()
+    def run(self):
+        while self.running:
+            scan = []
+            start_time = time.time()
+            while time.time() - start_time < self.interval:
+                try:
+                    new_scan, quality, angle, distance = next(self.measure_iter)
+                    if quality > 0:
+                        scan.append((quality, angle, distance))
+                except Exception as e:
+                    print("Lidar error:", e)
+                    break
 
-    # Set the robot to move a bit slower
-    Ab.PA = 20
-    Ab.PB = 20
+            with self.lock:
+                self.latest_scan = scan
 
-    # # Create Lidar object
-    # lidar = RPLidar("/dev/ttyUSB0", baudrate=460800)
-    # lidar.stop()
-    # lidar.connect()
-    # print(lidar.get_info())
-    # print(lidar.get_health())
-    # time.sleep(1)
+    def get_latest_scan(self):
+        with self.lock:
+            return list(self.latest_scan)
 
-    # Create lidar scan list and initialize scan
+    def stop(self):
+        self.running = False
+        time.sleep(0.1)
+
+# --- Main logic ---
+def main():
+    lidar = RPLidar('/dev/ttyUSB0', baudrate=460800)
+    lidar.start_motor()
+    time.sleep(1)
+
+    lidar_thread = LidarThread(lidar, interval=1.0)
+    lidar_thread.start()
+
     scan_list = []
 
-    # Movement parameters
-    forward_time = 0.5  # seconds
-    turn_time = 0.2  # seconds
-
-    # Move the robot and collect data
+    print("Starting scan collection...")
     for i in range(4):
-        # Get Lidar scan data
-        time.sleep(2)
-        # lidar.stop()
-        # lidar.start_motor()
-        scan = run_lidar()
+        print(f"Waiting for scan {i+1}...")
+        time.sleep(5)  # Wait 5 seconds before each scan
+        scan = lidar_thread.get_latest_scan()
         scan_list.append(scan)
-        Ab.forward()
-        time.sleep(forward_time)
-        Ab.stop()
-        time.sleep(2)
-        # lidar.stop()
-        # lidar.start_motor()
-        scan = run_lidar()
-        scan_list.append(scan)
-        time.sleep(1)
-        Ab.forward()
-        time.sleep(forward_time)
-        Ab.stop()
-        time.sleep(2)
-        # lidar.stop()
-        # lidar.start_motor()
-        scan = run_lidar()
-        scan_list.append(scan)
-        time.sleep(1)
-        Ab.right()
-        time.sleep(turn_time)
-        Ab.stop()
+        print(f"Scan {i+1} collected: {len(scan)} points")
 
-    # # Stop the Lidar and disconnect
-    # lidar.stop()
-    # lidar.stop_motor()
-    # lidar.disconnect()
+    print("Stopping Lidar...")
+    lidar_thread.stop()
+    lidar.stop()
+    lidar.stop_motor()
+    lidar.disconnect()
 
-    # Save scan data to CSV file (new file for each scan)
+    # Save scans to CSV files
+    print("Saving scans to CSV...")
     for i, scan in enumerate(scan_list):
         with open(f'scan_{i}.csv', 'w', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow(['Confidence','Angle', 'Distance'])
+            writer.writerow(['Confidence', 'Angle', 'Distance'])
             writer.writerows(scan)
+
+    print("Done.")
+
+if __name__ == "__main__":
+    main()
