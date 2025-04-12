@@ -3,30 +3,48 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load the CSV data
-df = pd.read_csv('scan_1.csv')  # replace with your CSV file path
+df_0 = pd.read_csv('scan_corner_0.csv')
+df_1 = pd.read_csv('scan_0.csv')
+# df_2 = pd.read_csv('scan_corner_2.csv')
+# df_3 = pd.read_csv('scan_corner_3.csv')
 
-df = df.head(500)  # Limit to the first 1000 rows for plotting
+# Only take the first 500 rows
+df_0 = df_0.head(500)
+df_1 = df_1.head(500)
+# df_2 = df_2.head(500)
+# df_3 = df_3.head(500)
 
-# Extract the angle and distance (assuming the columns are named 'angle' and 'distance')
-angles = df['Angle'].values  # in degrees
-distances = df['Distance'].values  # in meters
+# Extract angles
+angles_0 = df_0['Angle'].values
+angles_1 = df_1['Angle'].values
+# angles_2 = df_2['Angle'].values
+# angles_3 = df_3['Angle'].values
 
-# print(angles)
-# print(distances)
+# Extract distances
+distances_0 = df_0['Distance'].values
+distances_1 = df_1['Distance'].values
+# distances_2 = df_2['Distance'].values
+# distances_3 = df_3['Distance'].values
 
 # Convert angles to radians
-angles_rad = np.deg2rad(angles)
+angles_rad_0 = np.deg2rad(angles_0)
+angles_rad_1 = np.deg2rad(angles_1)
+# angles_rad_2 = np.deg2rad(angles_2)
+# angles_rad_3 = np.deg2rad(angles_3)
 
 # Create a polar plot
 plt.figure(figsize=(8, 8))
 ax = plt.subplot(111, projection='polar')
-ax.plot(angles_rad, distances, marker='o', linestyle='-', markersize=3)
+ax.plot(angles_rad_0, distances_0, marker='o', linestyle='-', markersize=3, color='r')
+ax.plot(angles_rad_1, distances_1, marker='o', linestyle='-', markersize=3, color='b')
+# ax.plot(angles_rad_2, distances_2, marker='o', linestyle='-', markersize=3, color='g')
+# ax.plot(angles_rad_3, distances_3, marker='o', linestyle='-', markersize=3, color='y')
 
-# Optional: Customize the plot
+# Label plot
 ax.set_title("RPLidar Scan Data")
 ax.set_xlabel("Angle (radians)")
 ax.set_ylabel("Distance (meters)")
-ax.set_ylim(0,  600)  # Adjust the radius for better visibility
+ax.set_ylim(0,  600)
 
 # Show the plot
 plt.show()
