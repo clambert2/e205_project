@@ -10,7 +10,7 @@ origin = (grid_size // 2, grid_size // 2)  # LIDAR at center
 
 # === Load CSV ===
 # CSV format: confidence, angle (degrees), distance (meters)
-df = pd.read_csv("lidar_move_and_scan_0.csv", header=None, names=["Confidence", "Angle", "Dist"])
+df = pd.read_csv("lidar_move_and_scan_2.csv", header=None, names=["Confidence", "Angle", "Dist"])
 # Convert mm to meters (if needed)
 
 # Convert strings to numbers and drop bad rows
