@@ -4,48 +4,21 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import math
-
-def interpret_and_print_transform(matrix):
-    """
-    Interprets a 4x4 homogeneous transformation matrix and prints:
-    - Translation in X, Y, Z
-    - Rotation around Z axis (in degrees)
-    
-    Args:
-        matrix (np.ndarray): A 4x4 numpy array.
-    """
-    if matrix.shape != (4, 4):
-        raise ValueError("Expected a 4x4 matrix.")
-
-    translation = matrix[:3, 3]
-    rotation_matrix = matrix[:3, :3]
-
-    # Since this is 2D motion, we assume rotation about Z
-    angle_rad = math.atan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
-    angle_deg = math.degrees(angle_rad)
-
-    print(f"Translation:")
-    print(f"  X: {translation[0]:.2f}")
-    print(f"  Y: {translation[1]:.2f}")
-    print(f"  Z: {translation[2]:.2f}")
-    print(f"Rotation around Z (yaw): {angle_deg:.2f} degrees")
+from scipy.signal import butter, filtfilt
 
 
 # Load the CSV data
-df_0 = pd.read_csv('lidar_move_and_scan_2.csv')
-df_1 = pd.read_csv('lidar_move_and_scan_3.csv')
-
-# Only take the first 500 rows
-df_0 = df_0.head(500)
-df_1 = df_1.head(500)
+df_lidar_0 = pd.read_csv('lidar_move_and_scan_1.csv')
+df_lidar_1 = pd.read_csv('lidar_move_and_scan_2.csv')
+df_accel = pd.read_csv('accel_move_and_scan_1.csv')
 
 # Extract angles
-angles_0 = df_0['Angle'].values
-angles_1 = df_1['Angle'].values
+angles_0 = df_lidar_0['Angle'].values
+angles_1 = df_lidar_1['Angle'].values
 
 # Extract distances
-distances_0 = df_0['Distance'].values
-distances_1 = df_1['Distance'].values
+distances_0 = df_lidar_0['Distance'].values
+distances_1 = df_lidar_1['Distance'].values
 
 # Convert polar (r, theta) to Cartesian
 def polar_to_cartesian(r, theta):
@@ -68,16 +41,95 @@ target_pcd.points = o3d.utility.Vector3dVector(
     np.c_[target_points, np.zeros(len(target_points))]
 )
 
+# Apply a butterworth filter to the accelerometer data
+def butter_lowpass_filter(data, cutoff, order=5):
+    fs = 1 / (data['Time'][1] - data['Time'][0])  # Sampling frequency
+    nyquist = 0.5 * fs
+    normal_cutoff = cutoff / nyquist
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+
+    filtered_data =  {
+        'Accel_X': filtfilt(b, a, data['Accel_X']),
+        'Accel_Y': filtfilt(b, a, data['Accel_Y']),
+        'Accel_Z': filtfilt(b, a, data['Accel_Z']),
+    }
+
+    return pd.DataFrame(filtered_data)
+
+butter_filtered_df = butter_lowpass_filter(df_accel, cutoff=0.99, order=2)
+
+# Integrate the accelerometer data
+velocity = [np.array([0.0, 0.0, 0.0])]
+position = [np.array([0.0, 0.0, 0.0])]
+accel_data = butter_filtered_df[['Accel_X', 'Accel_Y', 'Accel_Z']].values
+time_data = df_accel['Time'].values
+for i in range(1, len(accel_data)):
+    dt = time_data[i] - time_data[i - 1]
+    accel = accel_data[i] - np.array([0, 0, 9.81])  # Remove gravity
+    velocity.append(velocity[-1] + accel * dt)
+    position.append(position[-1] + velocity[-1] * dt)
+
+print(f"Final velocity: {velocity[-1]}")
+print(f"Final position: {position[-1]*1000}")
+
+# plot each column of the accelerometer data vs time (raw from csv)
+plt.figure(figsize=(10, 6))
+plt.subplot(3, 1, 1)
+plt.plot(time_data, accel_data[:, 0], label='Accel_X')
+plt.title('Accelerometer Data')
+plt.ylabel('Accel_X')
+plt.legend()
+plt.subplot(3, 1, 2)
+plt.plot(time_data, accel_data[:, 1], label='Accel_Y')
+plt.ylabel('Accel_Y')
+plt.legend()
+plt.subplot(3, 1, 3)
+plt.plot(time_data, accel_data[:, 2], label='Accel_Z')
+plt.ylabel('Accel_Z')
+plt.xlabel('Time (s)')
+plt.legend()
+plt.tight_layout()
+plt.show()
+
 # Run ICP
 THRESHOLD = 1000 # The maximum distance from point to point (set pretty high)
-trans_init = np.array([[ 0.000000e+00, -1.000000e+00,  0.000000e+00,  0.000000e+00],
-       [ 1.000000e+00,  6.123234e-17,  0.000000e+00,  0.000000e+00],
-       [ 0.000000e+00,  0.000000e+00,  1.000000e+00,  0.000000e+00],
-       [ 0.000000e+00,  0.000000e+00,  0.000000e+00,  1.000000e+00]])  # guess for transformation matrix
+# trans_init = np.array([[ 0.000000e+00, -1.000000e+00,  0.000000e+00,  0.000000e+00],
+#                        [ 1.000000e+00,  6.123234e-17,  0.000000e+00,  0.000000e+00],
+#                        [ 0.000000e+00,  0.000000e+00,  1.000000e+00,  0.000000e+00],
+#                        [ 0.000000e+00,  0.000000e+00,  0.000000e+00,  1.000000e+00]])
+trans_init = np.eye(4)
+trans_init[0:3, 3] = position[-1]*1000  # Set translation to final position
 reg_p2p = o3d.pipelines.registration.registration_icp(
     source_pcd, target_pcd, THRESHOLD, trans_init,
     o3d.pipelines.registration.TransformationEstimationPointToPoint()
 )
+
+
+def interpret_and_print_transform(matrix):
+    """
+    Interprets a 4x4 homogeneous transformation matrix and prints:
+    - Translation in X, Y, Z
+    - Rotation around Z axis (in degrees)
+    
+    Args:
+        matrix (np.ndarray): A 4x4 numpy array.
+    """
+    if matrix.shape != (4, 4):
+        raise ValueError("Expected a 4x4 matrix.")
+
+    translation = matrix[:3, 3]
+    rotation_matrix = matrix[:3, :3]
+
+    # Since this is 2D motion, we assume rotation about Z
+    angle_rad = math.atan2(rotation_matrix[1, 0], rotation_matrix[0, 0])
+    angle_deg = math.degrees(angle_rad)
+
+    print("Translation:")
+    print(f"  X: {translation[0]:.2f}")
+    print(f"  Y: {translation[1]:.2f}")
+    print(f"  Z: {translation[2]:.2f}")
+    print(f"Rotation around Z (yaw): {angle_deg:.2f} degrees")
+
 
 # Print the transformation matrix
 interpret_and_print_transform(reg_p2p.transformation)
