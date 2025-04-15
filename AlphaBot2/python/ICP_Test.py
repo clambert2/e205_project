@@ -8,9 +8,9 @@ from scipy.signal import butter, filtfilt
 
 
 # Load the CSV data
-df_lidar_0 = pd.read_csv('lidar_move_and_scan_1.csv')
-df_lidar_1 = pd.read_csv('lidar_move_and_scan_2.csv')
-df_accel = pd.read_csv('accel_move_and_scan_1.csv')
+df_lidar_0 = pd.read_csv('lidar_move_and_scan_2.csv')
+df_lidar_1 = pd.read_csv('lidar_move_and_scan_3.csv')
+df_accel = pd.read_csv('accel_move_and_scan_0.csv')
 
 # Extract angles
 angles_0 = df_lidar_0['Angle'].values
@@ -57,6 +57,7 @@ def butter_lowpass_filter(data, cutoff, order=5):
     return pd.DataFrame(filtered_data)
 
 butter_filtered_df = butter_lowpass_filter(df_accel, cutoff=0.99, order=2)
+butter_filtered_df = df_accel
 
 # Integrate the accelerometer data
 velocity = [np.array([0.0, 0.0, 0.0])]

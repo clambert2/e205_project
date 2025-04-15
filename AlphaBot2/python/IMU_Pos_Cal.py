@@ -103,16 +103,17 @@ def log_acceleration_data(accelerometer, duration=0.7, interval=0.1, filename='a
         writer.writerow(['Time', 'Accel_X', 'Accel_Y', 'Accel_Z'])
         writer.writerows(samples)
     print(f"Acceleration data saved to {filename}")
+    return samples
 
 
 # --- Main ---
 def main():
-    # Initialize Lidar
-    lidar = RPLidar('/dev/ttyUSB0', baudrate=460800)
-    lidar.start_motor()
-    time.sleep(1)
-    lidar_thread = LidarThread(lidar, interval=1.0)
-    lidar_thread.start()
+    # # Initialize Lidar
+    # lidar = RPLidar('/dev/ttyUSB0', baudrate=460800)
+    # lidar.start_motor()
+    # time.sleep(1)
+    # lidar_thread = LidarThread(lidar, interval=1.0)
+    # lidar_thread.start()
 
     # Initialize AlphaBot2
     robot = AlphaBot2()
@@ -124,32 +125,40 @@ def main():
     accelerometer = LSM6DS3(i2c)
 
     for i in range(1):
-        collect_lidar_scan(lidar_thread= lidar_thread,
-                           output_filename=f"lidar_move_and_scan_{i}.csv"
-        )
-        time.sleep(1)
+        # collect_lidar_scan(lidar_thread= lidar_thread,
+        #                    output_filename=f"lidar_move_and_scan_{i}.csv"
+        # )
+        # time.sleep(1)
         print("Move Forward")
         robot.forward()
         
         # Log accelerometer data while moving forward
-        log_acceleration_data(
+        samples = log_acceleration_data(
             accelerometer,
             duration=0.7,
             interval=0.05,
             filename=f"accel_move_and_scan_{i}.csv"
         )
+        samples.insert(0, (0, 0, 0, 0))
+        print(samples)
+        for i in range(len(samples)-1):
+            velocity = (samples[i+1][0]-samples[i][0])*samples[i][1:]
+            position = (samples[i+1][0]-samples[i][0])*velocity
+
+        print(f"Final velocity: {velocity}")
+        print(f"Final position: {position}")
 
         robot.stop()
-        time.sleep(0.5)
-        print("Turn Left")
-        robot.left()
-        time.sleep(0.15)
-        robot.stop()
+        # time.sleep(0.5)
+        # print("Turn Left")
+        # robot.left()
+        # time.sleep(0.15)
+        # robot.stop()
 
-    lidar_thread.stop()
-    lidar.stop()
-    lidar.stop_motor()
-    lidar.disconnect()
+    # lidar_thread.stop()
+    # lidar.stop()
+    # lidar.stop_motor()
+    # lidar.disconnect()
 
 if __name__ == "__main__":
     main()
