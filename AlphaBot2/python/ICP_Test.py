@@ -11,6 +11,7 @@ from scipy.signal import butter, filtfilt
 df_lidar_0 = pd.read_csv('lidar_move_and_scan_2.csv')
 df_lidar_1 = pd.read_csv('lidar_move_and_scan_3.csv')
 df_accel = pd.read_csv('accel_move_and_scan_0.csv')
+df_gyro = pd.read_csv('gyro_move_and_scan_0.csv')
 
 # Extract angles
 angles_0 = df_lidar_0['Angle'].values
@@ -72,6 +73,20 @@ for i in range(1, len(accel_data)):
 
 print(f"Final velocity: {velocity[-1]}")
 print(f"Final position: {position[-1]*1000}")
+pos = position[-1] * 1000  # Convert to mm
+
+# Integrate the gyroscope data
+gyro_data = df_gyro[['Gyro_X', 'Gyro_Y', 'Gyro_Z']].values
+time_data_gyro = df_gyro['Time'].values
+gyro_position = [np.array([0.0, 0.0, 0.0])]
+for i in range(1, len(gyro_data)):
+    dt = time_data_gyro[i] - time_data_gyro[i - 1]
+    gyro = gyro_data[i]  # No need to remove gravity
+    gyro_position.append(gyro_position[-1] + gyro * dt)
+rotate = gyro_position[-1]  # Final rotation in radians
+
+print(f"Final gyro position: {gyro_position[-1]}")
+print(f"Final gyro position (degrees): {np.rad2deg(gyro_position[-1])}")
 
 # plot each column of the accelerometer data vs time (raw from csv)
 plt.figure(figsize=(10, 6))
@@ -92,19 +107,24 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-# Run ICP
-THRESHOLD = 1000 # The maximum distance from point to point (set pretty high)
-# trans_init = np.array([[ 0.000000e+00, -1.000000e+00,  0.000000e+00,  0.000000e+00],
-#                        [ 1.000000e+00,  6.123234e-17,  0.000000e+00,  0.000000e+00],
-#                        [ 0.000000e+00,  0.000000e+00,  1.000000e+00,  0.000000e+00],
-#                        [ 0.000000e+00,  0.000000e+00,  0.000000e+00,  1.000000e+00]])
-trans_init = np.eye(4)
-trans_init[0:3, 3] = position[-1]*1000  # Set translation to final position
-reg_p2p = o3d.pipelines.registration.registration_icp(
-    source_pcd, target_pcd, THRESHOLD, trans_init,
-    o3d.pipelines.registration.TransformationEstimationPointToPoint()
-)
-
+# plot raw gyro data vs time
+plt.figure(figsize=(10, 6))
+plt.subplot(3, 1, 1)
+plt.plot(time_data_gyro, gyro_data[:, 0], label='Gyro_X')
+plt.title('Gyroscope Data')
+plt.ylabel('Gyro_X')
+plt.legend()
+plt.subplot(3, 1, 2)
+plt.plot(time_data_gyro, gyro_data[:, 1], label='Gyro_Y')
+plt.ylabel('Gyro_Y')
+plt.legend()
+plt.subplot(3, 1, 3)
+plt.plot(time_data_gyro, gyro_data[:, 2], label='Gyro_Z')
+plt.ylabel('Gyro_Z')
+plt.xlabel('Time (s)')
+plt.legend()
+plt.tight_layout()
+plt.show()
 
 def interpret_and_print_transform(matrix):
     """
@@ -130,6 +150,25 @@ def interpret_and_print_transform(matrix):
     print(f"  Y: {translation[1]:.2f}")
     print(f"  Z: {translation[2]:.2f}")
     print(f"Rotation around Z (yaw): {angle_deg:.2f} degrees")
+
+# Run ICP
+THRESHOLD = 1000 # The maximum distance from point to point (set pretty high)
+# trans_init = np.array([[ 0.000000e+00, -1.000000e+00,  0.000000e+00,  0.000000e+00],
+#                        [ 1.000000e+00,  6.123234e-17,  0.000000e+00,  0.000000e+00],
+#                        [ 0.000000e+00,  0.000000e+00,  1.000000e+00,  0.000000e+00],
+#                        [ 0.000000e+00,  0.000000e+00,  0.000000e+00,  1.000000e+00]])
+# add gyro and accel data to the transformation matrix
+trans_init = np.array([[np.cos(rotate[2]), -np.sin(rotate[2]), 0, pos[0]],
+                       [np.sin(rotate[2]), np.cos(rotate[2]), 0, 0],
+                       [0, 0, 1, 0],
+                       [0, 0, 0, 1]])
+
+interpret_and_print_transform(trans_init)
+
+reg_p2p = o3d.pipelines.registration.registration_icp(
+    source_pcd, target_pcd, THRESHOLD, trans_init,
+    o3d.pipelines.registration.TransformationEstimationPointToPoint()
+)
 
 
 # Print the transformation matrix
