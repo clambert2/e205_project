@@ -5,6 +5,7 @@ import threading
 from AlphaBot2 import AlphaBot2
 import board
 from adafruit_lsm6ds.lsm6ds3 import LSM6DS3
+import numpy as np
 
 
 # --- Thread class for collecting Lidar scans ---
@@ -86,21 +87,24 @@ def collect_lidar_scan(lidar_thread, timeout=10.0, output_filename='scan.csv'):
     print(f"Scan saved to {output_filename}")
 
 
-def log_acceleration_data(accelerometer, duration=0.7, interval=0.1, filename='accel.csv'):
-    """
-    Logs acceleration data for a specified duration and interval, and saves to CSV.
-    """
+def log_imu_data(imu, duration=0.7, interval=0.1, accel = True, filename='accel.csv'):
     samples = []
     start_time = time.time()
     while time.time() - start_time < duration:
-        ax, ay, az = accelerometer.acceleration
+        if accel:
+            x, y, z = imu.acceleration
+        else:
+            x, y, z = imu.gyro
         timestamp = time.time() - start_time
-        samples.append((timestamp, ax, ay, az))
+        samples.append((timestamp, x, y, z))
         time.sleep(interval)
 
     with open(filename, 'w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['Time', 'Accel_X', 'Accel_Y', 'Accel_Z'])
+        if accel:
+            writer.writerow(['Time', 'Accel_X', 'Accel_Y', 'Accel_Z'])
+        else:
+            writer.writerow(['Time', 'Gyro_X', 'Gyro_Y', 'Gyro_Z'])
         writer.writerows(samples)
     print(f"Acceleration data saved to {filename}")
     return samples
@@ -122,7 +126,7 @@ def main():
 
     # Initialize Accelerometer
     i2c = board.I2C()
-    accelerometer = LSM6DS3(i2c)
+    imu = LSM6DS3(i2c)
 
     for i in range(1):
         # collect_lidar_scan(lidar_thread= lidar_thread,
@@ -133,27 +137,49 @@ def main():
         robot.forward()
         
         # Log accelerometer data while moving forward
-        samples = log_acceleration_data(
-            accelerometer,
+        samples = log_imu_data(
+            imu = imu,
             duration=0.7,
-            interval=0.05,
+            interval=0.001,
+            accel=True,
             filename=f"accel_move_and_scan_{i}.csv"
         )
         samples.insert(0, (0, 0, 0, 0))
         print(samples)
-        for i in range(len(samples)-1):
-            velocity = (samples[i+1][0]-samples[i][0])*samples[i][1:]
-            position = (samples[i+1][0]-samples[i][0])*velocity
+        for i in range(len(samples) - 1):
+            dt = samples[i+1][0] - samples[i][0]
+            accel = np.array(samples[i][1:])
+            velocity += dt * accel
+            position += dt * velocity
 
         print(f"Final velocity: {velocity}")
         print(f"Final position: {position}")
 
         robot.stop()
-        # time.sleep(0.5)
-        # print("Turn Left")
-        # robot.left()
-        # time.sleep(0.15)
-        # robot.stop()
+        time.sleep(0.5)
+        print("Turn Left")
+        robot.left()
+        
+        # Log Gyroscope data while turning left
+        samples = log_imu_data(
+            imu = imu,
+            duration=0.15,
+            interval=0.001,
+            accel=False,
+            filename=f"gyro_move_and_scan_{i}.csv"
+        )
+
+        samples.insert(0, (0, 0, 0, 0))
+        print(samples)
+        for i in range(len(samples) - 1):
+            dt = samples[i+1][0] - samples[i][0]
+            gyro = np.array(samples[i][1:])
+            velocity += dt * gyro
+            position += dt * velocity
+        print(f"Final velocity: {velocity}")
+        print(f"Final position: {position}")
+
+        robot.stop()
 
     # lidar_thread.stop()
     # lidar.stop()
