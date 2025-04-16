@@ -133,19 +133,43 @@ def main():
         #                    output_filename=f"lidar_move_and_scan_{i}.csv"
         # )
         # time.sleep(1)
+
+        # Hold robot still for 10 seconds and collect imu data and then zero outputs
+        # print("Hold still")
+        # robot.stop()
+        # samples = log_imu_data(
+        #     imu = imu,
+        #     duration=10.0,
+        #     interval=0.1,
+        #     accel=True,
+        #     filename=f"accel_move_and_scan_0.csv"
+        # )
+        # accel_offsets = np.mean(np.array(samples)[:, 1:], axis=0)
+        # samples = log_imu_data(
+        #     imu = imu,
+        #     duration=0.5,
+        #     interval=0.1,
+        #     accel = False,
+        #     filename=f"accel_move_and_scan_0.csv"
+        # )
+        # gyro_offsets = np.mean(np.array(samples)[:, 1:], axis=0)
+
         print("Move Forward")
         robot.forward()
         
+
+
         # Log accelerometer data while moving forward
         samples = log_imu_data(
             imu = imu,
             duration=0.7,
             interval=0.001,
             accel=True,
-            filename=f"accel_move_and_scan_{i}.csv"
+            filename=f"accel_move_and_scan_0.csv"
         )
         samples.insert(0, (0, 0, 0, 0))
-        print(samples)
+        velocity = np.array([0.0, 0.0, 0.0])
+        position = np.array([0.0, 0.0, 0.0])
         for i in range(len(samples) - 1):
             dt = samples[i+1][0] - samples[i][0]
             accel = np.array(samples[i][1:])
@@ -166,18 +190,15 @@ def main():
             duration=0.15,
             interval=0.001,
             accel=False,
-            filename=f"gyro_move_and_scan_{i}.csv"
+            filename=f"gyro_move_and_scan_0.csv"
         )
 
-        samples.insert(0, (0, 0, 0, 0))
-        print(samples)
         for i in range(len(samples) - 1):
             dt = samples[i+1][0] - samples[i][0]
             gyro = np.array(samples[i][1:])
-            velocity += dt * gyro
-            position += dt * velocity
-        print(f"Final velocity: {velocity}")
+            position += dt * gyro
         print(f"Final position: {position}")
+        print(f"Final position: {np.rad2deg(position)}")
 
         robot.stop()
 
