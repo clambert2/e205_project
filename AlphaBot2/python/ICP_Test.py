@@ -153,15 +153,15 @@ def interpret_and_print_transform(matrix):
 
 # Run ICP
 THRESHOLD = 1000 # The maximum distance from point to point (set pretty high)
-# trans_init = np.array([[ 0.000000e+00, -1.000000e+00,  0.000000e+00,  0.000000e+00],
-#                        [ 1.000000e+00,  6.123234e-17,  0.000000e+00,  0.000000e+00],
-#                        [ 0.000000e+00,  0.000000e+00,  1.000000e+00,  0.000000e+00],
-#                        [ 0.000000e+00,  0.000000e+00,  0.000000e+00,  1.000000e+00]])
+trans_init = np.array([[ 0.000000e+00, -1.000000e+00,  0.000000e+00,  0.000000e+00],
+                       [ 1.000000e+00,  6.123234e-17,  0.000000e+00,  0.000000e+00],
+                       [ 0.000000e+00,  0.000000e+00,  1.000000e+00,  0.000000e+00],
+                       [ 0.000000e+00,  0.000000e+00,  0.000000e+00,  1.000000e+00]])
 # add gyro and accel data to the transformation matrix
-trans_init = np.array([[np.cos(rotate[2]), -np.sin(rotate[2]), 0, pos[0]],
-                       [np.sin(rotate[2]), np.cos(rotate[2]), 0, 0],
-                       [0, 0, 1, 0],
-                       [0, 0, 0, 1]])
+# trans_init = np.array([[np.cos(rotate[2]), -np.sin(rotate[2]), 0, pos[0]],
+#                        [np.sin(rotate[2]), np.cos(rotate[2]), 0, 0],
+#                        [0, 0, 1, 0],
+#                        [0, 0, 0, 1]])
 
 interpret_and_print_transform(trans_init)
 
