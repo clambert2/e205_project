@@ -8,8 +8,8 @@ from scipy.signal import butter, filtfilt
 
 
 # Load the CSV data
-df_lidar_0 = pd.read_csv('lidar_move_and_scan_1.csv')
-df_lidar_1 = pd.read_csv('lidar_move_and_scan_2.csv')
+df_lidar_0 = pd.read_csv('lidar_move_and_scan_2.csv')
+df_lidar_1 = pd.read_csv('lidar_move_and_scan_1.csv')
 df_accel = pd.read_csv('accel_move_and_scan_1.csv')
 
 # Extract angles
@@ -93,12 +93,25 @@ plt.show()
 
 # Run ICP
 THRESHOLD = 1000 # The maximum distance from point to point (set pretty high)
-# trans_init = np.array([[ 0.000000e+00, -1.000000e+00,  0.000000e+00,  0.000000e+00],
-#                        [ 1.000000e+00,  6.123234e-17,  0.000000e+00,  0.000000e+00],
+# trans_init = np.array([[ 0.000000e+00, 1.000000e+00,  0.000000e+00,  0.000000e+00],
+#                        [ -1.000000e+00,  0.000000e+00,  0.000000e+00,  0.000000e+00],
 #                        [ 0.000000e+00,  0.000000e+00,  1.000000e+00,  0.000000e+00],
 #                        [ 0.000000e+00,  0.000000e+00,  0.000000e+00,  1.000000e+00]])
-trans_init = np.eye(4)
-trans_init[0:3, 3] = position[-1]*1000  # Set translation to final position
+def z_rotation_matrix(degrees):
+    theta = np.radians(degrees)
+    cos_theta = np.cos(theta)
+    sin_theta = np.sin(theta)
+    
+    return np.array([
+        [ cos_theta, sin_theta, 0.0, 0.0],
+        [-sin_theta, cos_theta, 0.0, 0.0],
+        [ 0.0      , 0.0      , 1.0, 0.0],
+        [ 0.0      , 0.0      , 0.0, 1.0]
+    ])
+
+trans_init = z_rotation_matrix(110)  # Rotate -90 degrees around Z axis
+# trans_init = np.eye(4)
+# trans_init[0:3, 3] = position[-1]*1000  # Set translation to final position
 reg_p2p = o3d.pipelines.registration.registration_icp(
     source_pcd, target_pcd, THRESHOLD, trans_init,
     o3d.pipelines.registration.TransformationEstimationPointToPoint()
@@ -160,3 +173,7 @@ plt.scatter(source_transformed[:, 0],
 plt.axis('equal')
 plt.legend()
 plt.show()
+# Save the combined point cloud to a csv file
+
+combined_array = np.vstack((source_transformed[:, :2]))
+np.savetxt("combined_points.csv", combined_array, delimiter=",", fmt="%.6f")
