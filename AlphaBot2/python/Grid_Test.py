@@ -67,7 +67,7 @@ plt.legend()
 plt.show()
 
 # === Load second CSV ===
-df2 = pd.read_csv("combined_points.csv", header=None, names=["X", "Y"])
+df2 = pd.read_csv(folder_path + "combined_points.csv", header=None, names=["X", "Y"])
 df2 = df2.apply(pd.to_numeric, errors='coerce').dropna()
 points2 = df2[["X", "Y"]].values
 points2 = points2 / 1000.0  # Convert to meters
