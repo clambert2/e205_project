@@ -9,7 +9,6 @@ from scipy.signal import butter, filtfilt
 
 # Load the CSV data
 folder_path = 'test_data/04_21_lidar/'
-print(folder_path + 'lidar_move_and_scan_2.csv')
 df_lidar_0 = pd.read_csv(folder_path + 'lidar_move_and_scan_2.csv')
 df_lidar_1 = pd.read_csv(folder_path + 'lidar_move_and_scan_3.csv')
 df_accel = pd.read_csv(folder_path + 'accel_move_and_scan_0.csv')
