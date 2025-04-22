@@ -86,7 +86,7 @@ def collect_lidar_scan(lidar_thread, timeout=10.0, output_filename='scan.csv'):
     print(f"Scan saved to {output_filename}")
 
 
-def log_acceleration_data(accelerometer, duration=0.7, interval=0.1, filename='accel.csv'):
+def log_acceleration_data(accelerometer, duration=0.7, interval=0.1, save_csv = False, filename='accel.csv'):
     """
     Logs acceleration data for a specified duration and interval, and saves to CSV.
     """
@@ -97,12 +97,12 @@ def log_acceleration_data(accelerometer, duration=0.7, interval=0.1, filename='a
         timestamp = time.time() - start_time
         samples.append((timestamp, ax, ay, az))
         time.sleep(interval)
-
-    with open(filename, 'w', newline='') as file:
-        writer = csv.writer(file)
-        writer.writerow(['Time', 'Accel_X', 'Accel_Y', 'Accel_Z'])
-        writer.writerows(samples)
-    print(f"Acceleration data saved to {filename}")
+    if save_csv:
+        with open(filename, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['Time', 'Accel_X', 'Accel_Y', 'Accel_Z'])
+            writer.writerows(samples)
+        print(f"Acceleration data saved to {filename}")
 
 
 # --- Main ---

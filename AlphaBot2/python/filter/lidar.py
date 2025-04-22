@@ -40,6 +40,7 @@ class LidarThread(threading.Thread):
     def stop(self):
         self.running = False
         time.sleep(0.1)
+        
 
 class Lidar:
     def __init__(self, port='/dev/ttyUSB0', baudrate=460800, interval=1.0):
