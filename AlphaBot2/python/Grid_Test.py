@@ -37,8 +37,7 @@ for gx, gy in grid_points:
     if 0 <= gx < grid_size and 0 <= gy < grid_size:
         rr, cc = line(origin[1], origin[0], gy, gx)  # Swap x and y here to fix rotation
         rr = np.clip(rr, 0, grid_size - 1)  # Ensure within bounds
-        cc = np.clip(cc, 0, grid_size - 1)  # Ensure within bounds
-        
+        cc = np.clip(cc, 0, grid_size - 1)  # Ensure within bounds      
         grid[rr, cc] = 1  # Mark free space
 
 # === Mark occupied cells ===
