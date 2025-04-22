@@ -67,7 +67,7 @@ class Lidar:
                 if rounded_angle not in angle_set:
                     angle_set.add(rounded_angle)
                     all_points.append(point)
-            
+
             if len(angle_set) >= 360:
                 print(f"Full scan collected with {len(all_points)} points.")
                 break
@@ -87,14 +87,14 @@ class Lidar:
             print(f"Scan saved to {output_filename}")
 
         return self.convert_to_cartesian(all_points)
-    
+
     def convert_to_cartesian(self, scan_points):
         r = np.array([d for _, _, d in scan_points])
         theta = np.radians([a for _, a, _ in scan_points])
         x = r * np.cos(theta)
         y = r * np.sin(theta)
         return np.vstack((x, y)).T
-    
+
     def stop(self):
         self.thread.stop()
         self.lidar.stop()
@@ -128,7 +128,7 @@ class Lidar:
         )
 
         return reg_p2p.transformation
-    
+
     def transform_scan(self, scan, transformation):
         homogeneous_scan = np.hstack((scan,
                                       np.zeros((scan.shape[0], 1)),
@@ -139,6 +139,6 @@ class Lidar:
 
     def print_info(self):
         print(self.lidar.get_info())
-    
+
     def print_health(self):
         print(self.lidar.get_health())
