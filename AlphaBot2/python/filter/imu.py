@@ -46,9 +46,13 @@ class IMU:
     def __init__(self, interval=0.05):
         self.i2c = board.I2C()
         self.imu = LSM6DS3(self.i2c)
+        self.pose = [0, 0, 0]  # [x, y, theta]
+        self.vel = [0, 0, 0]
+        self.last_timestamp = 0.00
+        self.time_passed = 0.00
 
         # Manually set accel and gyro range via I2C
-        with I2CDevice(self.i2c, self.imu._address) as device:
+        with I2CDevice(self.i2c, 0x6A) as device:
             # ACCEL: ODR = 104Hz (0b0100), FS = ±2g (0b00) => 0b01000000 = 0x40
             device.write(bytes([0x10, 0x40]))
 
@@ -78,3 +82,29 @@ class IMU:
             'Gyro_Z': filtfilt(b, a, data[6]),
         }
         return filtered_data
+
+    def get_pose(self):
+        return self.pose
+    
+    def get_velocity(self):
+        return self.velocity
+    
+    def update_pose(self):
+        # position = np.zeros(3)  # [x, y, theta]
+        # velocity = np.zeros(3)  # [vx, vy, vtheta]
+        samples = self.get_data()
+        for i, sample in enumerate(samples):
+            print(self.pose)
+            timestamp, ax, ay, az, gx, gy, gz = sample
+            dt = (timestamp - timestamp) if  i < 1 else (timestamp - samples[i-1][0])
+            self.vel[0] += ax * dt
+            self.vel[1] += ay * dt
+            self.vel[2] = gz
+            self.pose[0] += self.vel[0] * dt
+            self.pose[1] += self.vel[1] * dt
+            self.pose[2] += gz * dt * 8
+        return self.pose
+
+    def clear_data(self):
+        self.thread.queue.queue.clear()
+        self.velocity = [0, 0, 0]
