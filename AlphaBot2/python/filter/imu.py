@@ -6,6 +6,7 @@ import numpy as np
 from queue import Queue
 from scipy.signal import butter, filtfilt
 from adafruit_lsm6ds.lsm6ds3 import LSM6DS3
+from adafruit_bus_device.i2c_device import I2CDevice
 
 
 class IMUThread(threading.Thread):
@@ -45,7 +46,15 @@ class IMU:
     def __init__(self, interval=0.05):
         self.i2c = board.I2C()
         self.imu = LSM6DS3(self.i2c)
-        self.imu.set_range(LSM6DS3.ACCEL_RANGE_2_G, LSM6DS3.GYRO_RANGE_1000_DPS)
+
+        # Manually set accel and gyro range via I2C
+        with I2CDevice(self.i2c, self.imu._address) as device:
+            # ACCEL: ODR = 104Hz (0b0100), FS = ±2g (0b00) => 0b01000000 = 0x40
+            device.write(bytes([0x10, 0x40]))
+
+            # GYRO: ODR = 104Hz (0b0100), FS = ±1000 dps (0b11) => 0b01001100 = 0x4C
+            device.write(bytes([0x11, 0x4C]))
+
         self.thread = IMUThread(self.imu, interval=interval)
         self.thread.start()
 
