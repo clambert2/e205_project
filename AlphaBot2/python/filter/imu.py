@@ -94,7 +94,6 @@ class IMU:
         # velocity = np.zeros(3)  # [vx, vy, vtheta]
         samples = self.get_data()
         for i, sample in enumerate(samples):
-            print(self.pose)
             timestamp, ax, ay, az, gx, gy, gz = sample
             dt = (timestamp - timestamp) if  i < 1 else (timestamp - samples[i-1][0])
             self.vel[0] += ax * dt
