@@ -34,7 +34,7 @@ if __name__=='__main__':
         velocity[1] += ay * dt
         position[0] += velocity[0] * dt
         position[1] += velocity[1] * dt
-        position[2] += gz * dt
+        position[2] += gz * dt * 8
         print(f"Integrated Position: x={position[0]:.3f}, y={position[1]:.3f}, theta={position[2]:.3f}")
         print(f"Integrated Velocity: vx={velocity[0]:.3f}, vy={velocity[1]:.3f}, vtheta={position[2]:.3f}")
         print(f"Time passed: {time_passed:.3f} s")
@@ -73,7 +73,7 @@ if __name__=='__main__':
         velocity[2] = gz
         position[0] += velocity[0] * dt
         position[1] += velocity[1] * dt
-        position[2] += gz * dt
+        position[2] += gz * dt * 8
         print(f"Integrated Position: x={position[0]:.3f}, y={position[1]:.3f}, theta={position[2]:.3f}")
         print(f"Integrated Velocity: vx={velocity[0]:.3f}, vy={velocity[1]:.3f}, vtheta={velocity[2]:.3f}")
         print(f"Time passed: {time_passed:.3f} s")
