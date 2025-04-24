@@ -45,9 +45,12 @@ if __name__=='__main__':
     alpha_bot = AlphaBot2()
     alpha_bot.setPWMA(20)
     alpha_bot.setPWMB(20)
-    alpha_bot.forward()
-    time.sleep(0.5)
+    alpha_bot.setMotor(10,-10)
+    time.sleep(2)
     alpha_bot.stop()
+    time.sleep(1)
+
+    print("------------------------------------------------------")
 
     samples = imu.get_data()
 
@@ -67,10 +70,11 @@ if __name__=='__main__':
         print(f"Time delta: {dt:.3f} s")
         velocity[0] += ax * dt
         velocity[1] += ay * dt
+        velocity[2] = gz
         position[0] += velocity[0] * dt
         position[1] += velocity[1] * dt
         position[2] += gz * dt
         print(f"Integrated Position: x={position[0]:.3f}, y={position[1]:.3f}, theta={position[2]:.3f}")
-        print(f"Integrated Velocity: vx={velocity[0]:.3f}, vy={velocity[1]:.3f}, vtheta={position[2]:.3f}")
+        print(f"Integrated Velocity: vx={velocity[0]:.3f}, vy={velocity[1]:.3f}, vtheta={velocity[2]:.3f}")
         print(f"Time passed: {time_passed:.3f} s")
         print("")
