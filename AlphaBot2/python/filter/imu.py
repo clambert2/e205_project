@@ -45,6 +45,7 @@ class IMU:
     def __init__(self, interval=0.05):
         self.i2c = board.I2C()
         self.imu = LSM6DS3(self.i2c)
+        self.imu.set_range(LSM6DS3.ACCEL_RANGE_2_G, LSM6DS3.GYRO_RANGE_1000_DPS)
         self.thread = IMUThread(self.imu, interval=interval)
         self.thread.start()
 
