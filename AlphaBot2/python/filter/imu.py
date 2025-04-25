@@ -68,7 +68,7 @@ class IMU:
     def stop(self):
         self.thread.stop()
 
-    def filter_data(self, data, cutoff, order):
+    def butterworth_filter(self, data, cutoff, order):
         nyquist = 0.5 * 100
         normal_cutoff = cutoff / nyquist
         b, a = butter(order, normal_cutoff, btype='low', analog=False)
@@ -82,6 +82,11 @@ class IMU:
             'Gyro_Z': filtfilt(b, a, data[6]),
         }
         return filtered_data
+    
+    def ewma_filter(self, data, alpha=0.75):
+        for i in range(1, len(data)):
+            data[i] = alpha * data[i-1] + (1 - alpha) * data[i]
+        return data
 
     def get_pose(self):
         return self.pose
