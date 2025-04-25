@@ -43,7 +43,7 @@ class IMUThread(threading.Thread):
 
 
 class IMU:
-    def __init__(self, interval=0.05):
+    def __init__(self, interval=0.01):
         self.i2c = board.I2C()
         self.imu = LSM6DS3(self.i2c)
         self.pose = [0, 0, 0]  # [x, y, theta]
