@@ -2,6 +2,7 @@ from lidar import Lidar
 from imu import IMU
 import utils
 from map import Map
+from pose_estimator import PoseEstimator
 
 
 '''
