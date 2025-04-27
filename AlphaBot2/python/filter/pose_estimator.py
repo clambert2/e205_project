@@ -6,22 +6,39 @@ from imu import IMU
 class PoseEstimator:
 
     def __init__(self):
-        self.Gx = np.array()
-        self.Gu = np.array()
-        self.H = np.array()
-        self.R = np.array()
-        self.Q = np.array()
-        self.S = np.array()
-        self.S_bar = np.array()
-        self.K = np.array()
+        # Initialize EKF parameters all units are in millimeters
         self.x = np.zeros((3, 1))
         self.x_bar = np.zeros((3, 1))
 
+        self.S = np.eye(3)
+        self.S_bar = np.eye(3)
 
-    def prediction(self, u):
-        # Prediction step of the Kalman filter
-        self.x_bar = self.Gx @ self.x + self.Gu @ u
-        self.P_bar = self.Gx @ self.P @ self.Gx.T + self.Q
+        self.Gx = np.eye(3)
+        self.Gu = np.array([[np.cos(self.x[2,0]), 0, 0],
+                            [0, np.sin(self.x[2,0]), 0],
+                            [0, 0, 1]
+                            ])
+
+        self.R = np.array([[10, 0, 0],
+                           [0, 10, 0],
+                           [0, 0, 10]
+                           ])
+        
+        self.H = np.eye(3)
+        self.Q = np.array([[20, 0, 0],
+                           [0, 20, 0],
+                           [0, 0, 20]
+                           ])
+        self.K = 1
+
+    def prediction(self, u, dt):
+        self.Gu[3, 2] = dt
+        self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
+        self.S_bar = self.Gx @ self.S_bar @ self.Gx.T + self.Gu @ self.R @ self.Gu.T
 
     def measurement_update(self, z):
-
+        self.K = self.S_bar @ self.H.T @ np.linalg.inv(self.H @ self.S_bar @ self.H.T + self.Q)
+        self.x = self.x_bar + self.K @ (z - self.H @ self.x_bar)
+        self.S = (np.eye(3) - self.K @ self.H) @ self.S_bar
+        self.S_bar = self.S
+        self.x_bar = self.x
