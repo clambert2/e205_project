@@ -35,6 +35,7 @@ class PoseEstimator:
         self.Gu[3, 2] = dt
         self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
         self.S_bar = self.Gx @ self.S_bar @ self.Gx.T + self.Gu @ self.R @ self.Gu.T
+        return self.x_bar[0, 0], self.x_bar[1, 0], self.x_bar[2, 0]
 
     def measurement_update(self, z):
         self.K = self.S_bar @ self.H.T @ np.linalg.inv(self.H @ self.S_bar @ self.H.T + self.Q)
@@ -42,3 +43,4 @@ class PoseEstimator:
         self.S = (np.eye(3) - self.K @ self.H) @ self.S_bar
         self.S_bar = self.S
         self.x_bar = self.x
+        return self.x[0, 0], self.x[1, 0], self.x[2, 0]
