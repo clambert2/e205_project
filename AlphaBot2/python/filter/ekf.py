@@ -3,7 +3,7 @@ import time
 import csv
 from imu import IMU
 
-class PoseEstimator:
+class EKF:
 
     def __init__(self):
         # Initialize EKF parameters all units are in millimeters
