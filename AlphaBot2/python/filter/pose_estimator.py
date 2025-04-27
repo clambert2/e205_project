@@ -18,7 +18,10 @@ class PoseEstimator:
         self.x_bar = np.zeros((3, 1))
 
 
-    def prediction
+    def prediction(self, u):
+        # Prediction step of the Kalman filter
+        self.x_bar = self.Gx @ self.x + self.Gu @ u
+        self.P_bar = self.Gx @ self.P @ self.Gx.T + self.Q
 
-    def measurement_update
+    def measurement_update(self, z):
 
