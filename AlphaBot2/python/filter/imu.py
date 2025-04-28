@@ -65,7 +65,7 @@ class IMU:
 
     def stop(self):
         self.thread.stop()
-    
+
     def ewma_filter(self, data, alpha=0.75):
         for i in range(1, len(data)):
             data[i] = alpha * data[i-1] + (1 - alpha) * data[i]
