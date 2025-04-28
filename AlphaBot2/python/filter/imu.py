@@ -46,8 +46,6 @@ class IMU:
     def __init__(self, interval=0.01):
         self.i2c = board.I2C()
         self.imu = LSM6DS3(self.i2c)
-        self.pose = [0, 0, 0]  # [x, y, theta]
-        self.vel = [0, 0, 0]
         self.last_timestamp = 0.00
         self.time_passed = 0.00
 
@@ -67,46 +65,11 @@ class IMU:
 
     def stop(self):
         self.thread.stop()
-
-    def butterworth_filter(self, data, cutoff, order):
-        nyquist = 0.5 * 100
-        normal_cutoff = cutoff / nyquist
-        b, a = butter(order, normal_cutoff, btype='low', analog=False)
-        filtered_data = {
-            'Time': data[0],
-            'Accel_X': filtfilt(b, a, data[1]),
-            'Accel_Y': filtfilt(b, a, data[2]),
-            'Accel_Z': filtfilt(b, a, data[3]),
-            'Gyro_X': filtfilt(b, a, data[4]),
-            'Gyro_Y': filtfilt(b, a, data[5]),
-            'Gyro_Z': filtfilt(b, a, data[6]),
-        }
-        return filtered_data
     
     def ewma_filter(self, data, alpha=0.75):
         for i in range(1, len(data)):
             data[i] = alpha * data[i-1] + (1 - alpha) * data[i]
         return data
 
-    def get_pose(self):
-        return self.pose
-    
-    def get_velocity(self):
-        return self.velocity
-    
-    def update_pose(self):
-        # position = np.zeros(3)  # [x, y, theta]
-        # velocity = np.zeros(3)  # [vx, vy, vtheta]
-        samples = self.get_data()
-
-            self.vel[0] += ax * dt
-            self.vel[1] += ay * dt
-            self.vel[2] = gz
-            self.pose[0] += self.vel[0] * dt
-            self.pose[1] += self.vel[1] * dt
-            self.pose[2] += gz * dt * 8
-        return self.pose
-
     def clear_data(self):
         self.thread.queue.queue.clear()
-        self.velocity = [0, 0, 0]
