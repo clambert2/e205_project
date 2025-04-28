@@ -24,11 +24,19 @@ class EKF:
         self.Q = np.eye(3)*0.1
         self.K = 1
 
-    def prediction(self, imu_measurement):
+    def prediction(self, imu_measurement, is_turn = False, is_move = False):
         for i, sample in enumerate(imu_measurement):
             timestamp, a, w = sample
+            if is_turn:
+                a = 0
+            if is_move:
+                w = 0
             dt = (timestamp - timestamp) if  i < 1 else (timestamp - imu_measurement[i-1][0])
+            print(f"dt: {dt}")
             u = np.array([[a], [w]])
+            print(f'u: {u}')
+            self.Gu[0, 0] = dt * np.cos(self.x[2, 0])
+            self.Gu[1, 0] = dt * np.sin(self.x[2, 0])
             self.Gu[2, 1] = dt
             self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
             self.S_bar = self.Gx @ self.S_bar @ self.Gx.T + self.Gu @ self.R @ self.Gu.T

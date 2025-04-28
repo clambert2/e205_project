@@ -2,7 +2,6 @@ from imu import IMU
 from ekf import EKF
 import time
 import numpy as np
-import matplotlib.pyplot as plt
 from AlphaBot2 import AlphaBot2
 
 
@@ -29,4 +28,4 @@ if __name__=='__main__':
     alpha_bot.stop()
     time.sleep(1)
 
-    print(imu.update_pose())
+    print(ekf.prediction(imu.get_data()))
