@@ -32,9 +32,7 @@ class EKF:
             if is_move:
                 w = 0
             dt = (timestamp - timestamp) if  i < 1 else (timestamp - imu_measurement[i-1][0])
-            print(f"dt: {dt}")
             u = np.array([[a], [w]])
-            print(f'u: {u}')
             self.Gu[0, 0] = dt * np.cos(self.x[2, 0])
             self.Gu[1, 0] = dt * np.sin(self.x[2, 0])
             self.Gu[2, 1] = dt
