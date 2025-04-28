@@ -22,9 +22,9 @@ class IMUThread(threading.Thread):
         while self.running:
             try:
                 timestamp = time.time()
-                ax, ay, az = self.imu.acceleration
-                gx, gy, gz = self.imu.gyro
-                data_point = (timestamp, ax, ay, az, gx, gy, gz)
+                a = self.imu.acceleration[1]
+                w = self.imu.gyro[2]
+                data_point = (timestamp, a, w)
                 if not self.queue.full():
                     self.queue.put(data_point)
             except Exception as e:
@@ -98,9 +98,7 @@ class IMU:
         # position = np.zeros(3)  # [x, y, theta]
         # velocity = np.zeros(3)  # [vx, vy, vtheta]
         samples = self.get_data()
-        for i, sample in enumerate(samples):
-            timestamp, ax, ay, az, gx, gy, gz = sample
-            dt = (timestamp - timestamp) if  i < 1 else (timestamp - samples[i-1][0])
+
             self.vel[0] += ax * dt
             self.vel[1] += ay * dt
             self.vel[2] = gz

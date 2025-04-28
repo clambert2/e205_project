@@ -6,7 +6,7 @@ from imu import IMU
 class EKF:
 
     def __init__(self):
-        # Initialize EKF parameters all units are in millimeters
+        # Initialize EKF parameters all units are in meters and radians
         self.x = np.zeros((3, 1))
         self.x_bar = np.zeros((3, 1))
 
@@ -19,19 +19,19 @@ class EKF:
                             [0, 0, 1]
                             ])
 
-        self.R = np.array([[10, 0, 0],
-                           [0, 10, 0],
-                           [0, 0, 10]
+        self.R = np.array([[0.2, 0, 0],
+                           [0, 0.2, 0],
+                           [0, 0, 0.2]
                            ])
-        
         self.H = np.eye(3)
-        self.Q = np.array([[20, 0, 0],
-                           [0, 20, 0],
-                           [0, 0, 20]
+        self.Q = np.array([[0.1, 0, 0],
+                           [0, 0.1, 0],
+                           [0, 0, 0.1]
                            ])
         self.K = 1
 
     def prediction(self, u, dt):
+        # u is a 
         self.Gu[3, 2] = dt
         self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
         self.S_bar = self.Gx @ self.S_bar @ self.Gx.T + self.Gu @ self.R @ self.Gu.T
