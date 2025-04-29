@@ -23,7 +23,7 @@ class IMUThread(threading.Thread):
             try:
                 timestamp = time.time()
                 a = self.imu.acceleration[1]
-                w = self.imu.gyro[2] * 8 # NOTE CONSTANT ADDED FOUND IN SCALING
+                w = self.imu.gyro[2] # NOTE CONSTANT ADDED FOUND IN SCALING
                 data_point = (timestamp, a, w)
                 if not self.queue.full():
                     self.queue.put(data_point)

@@ -18,8 +18,8 @@ class EKF:
         self.Gx[1,3] = 1
         self.Gu = np.array([[0, 0],
                             [0, 0],
-                            [np.cos(self.x[2,0]), 0],
-                            [np.sin(self.x[2,0]), 0],
+                            [np.cos(self.x[4,0]), 0],
+                            [np.sin(self.x[4,0]), 0],
                             [0, 1]
                             ])
 
@@ -38,12 +38,12 @@ class EKF:
                 a = 0
             if is_move:
                 w = 0
-            dt = (timestamp - timestamp) if  i < 1 else (timestamp - imu_measurement[i-1][0])
+            dt = (0.01) if  i < 1 else (timestamp - imu_measurement[i-1][0])
             u = np.array([[a], [w]])
             self.Gx[0, 2] = dt
             self.Gx[1, 3] = dt
-            self.Gu[2, 0] = dt * np.cos(self.x[2, 0])
-            self.Gu[3, 0] = dt * np.sin(self.x[2, 0])
+            self.Gu[2, 0] = dt * np.cos(self.x[4, 0])
+            self.Gu[3, 0] = dt * np.sin(self.x[4, 0])
             self.Gu[4, 1] = dt
             self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
             self.S_bar = self.Gx @ self.S_bar @ self.Gx.T + self.Gu @ self.R @ self.Gu.T

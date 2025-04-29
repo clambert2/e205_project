@@ -22,9 +22,10 @@ if __name__=='__main__':
     # Clear the IMU data
     imu.clear_data()
     time.sleep(0.2)
-    alpha_bot.setMotor(15,-15)
+    #alpha_bot.setMotor(10,-10)
+    alpha_bot.forward()
     time.sleep(0.5)
     alpha_bot.stop()
     time.sleep(1)
 
-    print(ekf.prediction(imu.get_data(), is_turn=True))
+    print(ekf.prediction(imu.get_data()))
