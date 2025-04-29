@@ -45,8 +45,7 @@ class EKF:
             self.Gu[2, 0] = dt * np.cos(self.x[2, 0])
             self.Gu[3, 0] = dt * np.sin(self.x[2, 0])
             self.Gu[4, 1] = dt
-            self.x_bar += self.Gu @ u
-            self.x_bar = self.Gx @ self.x_bar
+            self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
             self.S_bar = self.Gx @ self.S_bar @ self.Gx.T + self.Gu @ self.R @ self.Gu.T
         return self.x_bar[0, 0], self.x_bar[1, 0], self.x_bar[2, 0]
 
