@@ -3,8 +3,8 @@ import time
 import csv
 from imu import IMU
 
-class EKF:
 
+class EKF:
     def __init__(self):
         # Initialize EKF parameters all units are in meters and radians
         self.x = np.zeros((5, 1)) #[x; y; x_dot; y_dot; theta]
