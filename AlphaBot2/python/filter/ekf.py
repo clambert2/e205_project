@@ -7,20 +7,27 @@ class EKF:
 
     def __init__(self):
         # Initialize EKF parameters all units are in meters and radians
-        self.x = np.zeros((3, 1))
-        self.x_bar = np.zeros((3, 1))
+        self.x = np.zeros((5, 1)) #[x; y; x_dot; y_dot; theta]
+        self.x_bar = np.zeros((5, 1))
 
-        self.S = np.eye(3)
-        self.S_bar = np.eye(3)
+        self.S = np.eye(5)
+        self.S_bar = np.eye(5)
 
-        self.Gx = np.eye(3)
-        self.Gu = np.array([[np.cos(self.x[2,0]), 0],
+        self.Gx = np.eye(5)
+        self.Gx[0,2] = 1
+        self.Gx[1,3] = 1
+        self.Gu = np.array([[0, 0],
+                            [0, 0],
+                            [np.cos(self.x[2,0]), 0],
                             [np.sin(self.x[2,0]), 0],
                             [0, 1]
                             ])
 
         self.R = np.eye(2)*0.2
-        self.H = np.eye(3)
+        self.H = np.array([[1, 0, 0, 0, 0],
+                           [0, 1, 0, 0, 0],
+                           [0, 0, 0, 0, 1],
+                           ])
         self.Q = np.eye(3)*0.1
         self.K = 1
 
@@ -33,10 +40,13 @@ class EKF:
                 w = 0
             dt = (timestamp - timestamp) if  i < 1 else (timestamp - imu_measurement[i-1][0])
             u = np.array([[a], [w]])
-            self.Gu[0, 0] = dt * np.cos(self.x[2, 0])
-            self.Gu[1, 0] = dt * np.sin(self.x[2, 0])
-            self.Gu[2, 1] = dt
-            self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
+            self.Gx[0, 2] = dt
+            self.Gx[1, 3] = dt
+            self.Gu[2, 0] = dt * np.cos(self.x[2, 0])
+            self.Gu[3, 0] = dt * np.sin(self.x[2, 0])
+            self.Gu[4, 1] = dt
+            self.x_bar += self.Gu @ u
+            self.x_bar = self.Gx @ self.x_bar
             self.S_bar = self.Gx @ self.S_bar @ self.Gx.T + self.Gu @ self.R @ self.Gu.T
         return self.x_bar[0, 0], self.x_bar[1, 0], self.x_bar[2, 0]
 
