@@ -1,7 +1,3 @@
-from lidar import Lidar
-from imu import IMU
-import utils
-from map import Map
 from ekf import EKF
 from adafruit_lsm6ds.lsm6ds3 import LSM6DS3
 from adafruit_bus_device.i2c_device import I2CDevice
@@ -27,7 +23,6 @@ class PoseThread(threading.Thread):
         self.last_time = time.time()
         self.ekf = EKF()
         self.u = np.zeros((2, 1))
-        self.pose = np.zeros((3, 1))
 
         with I2CDevice(self.i2c, 0x6A) as device:
             # ACCEL: ODR = 104Hz (0b0100), FS = ±2g (0b00) => 0b01000000 = 0x40
@@ -48,52 +43,59 @@ class PoseThread(threading.Thread):
             dt = timestamp - self.last_time
             self.last_time = timestamp
             if not self.is_still:
-                self.pose = self.ekf.prediction(self.u, dt)
+                self.ekf.prediction(self.u, dt)
+            #print("Pose: ", self.pose)
             time.sleep(self.interval)
 
     def robot_still(self):
         with self.lock:
             self.is_still = True
+            self.is_turn = False
+            self.is_move = False
 
     def robot_move(self):
         with self.lock:
             self.is_still = False
+            self.is_turn = False
             self.is_move = True
 
     def robot_turn(self):
         with self.lock:
             self.is_still = False
             self.is_turn = True
+            self.is_move = False
 
     def get_pose(self):
         with self.lock:
-            return self.pose
-
+            return self.ekf.x_bar
     
+    def get_pose_and_u(self):
+        with self.lock:
+            return self.ekf.x_bar, self.u
+
+    def stop(self):
+        self.running = False
+        self.join()
 
 
 
 if __name__=='__main__':
     # Initialize the robot components
-    imu = IMU()
-    
-    # Main loop
-    while True:
-        # 1. Lidar scan
-        lidar_data = lidar.scan()
-        
-        # 2. Measurement Update for EKF
-        ekf.update(lidar_data)
-        
-        # 3. Update Map
-        map.update(lidar_data, robot.position)
-        
-        # 4. Path Planning for next movement
-        next_position = map.plan_path(robot.position)
-        
-        # 5. Move robot to next position
-        robot.move_to(next_position)
-        
-        # 6. While robot is moving update prediction for EKF
-        while not robot.reached_destination(next_position):
-            ekf.predict()
+    high_speed_thread = PoseThread()
+    high_speed_thread.start()
+
+    time.sleep(2)
+    print("pose: ", high_speed_thread.get_pose_and_u())
+    high_speed_thread.robot_move()
+    time.sleep(2)
+    print("pose: ", high_speed_thread.get_pose_and_u())
+    high_speed_thread.robot_still()
+    time.sleep(2)
+    print("pose: ", high_speed_thread.get_pose_and_u())
+    high_speed_thread.robot_turn()
+    time.sleep(5)
+    print("pose: ", high_speed_thread.get_pose_and_u())
+    high_speed_thread.robot_move()
+    time.sleep(2)
+    print("pose: ", high_speed_thread.get_pose_and_u())
+    high_speed_thread.stop()

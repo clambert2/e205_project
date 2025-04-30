@@ -1,7 +1,4 @@
 import numpy as np
-import time
-import csv
-from imu import IMU
 
 
 class EKF:
@@ -31,11 +28,11 @@ class EKF:
         self.Q = np.eye(3)*0.1
         self.K = 1
 
-    def prediction(self, u, dt):        
+    def prediction(self, u, dt):
         self.Gx[0, 2] = dt
         self.Gx[1, 3] = dt
-        self.Gu[2, 0] = dt * np.cos(self.x[4, 0])
-        self.Gu[3, 0] = dt * np.sin(self.x[4, 0])
+        self.Gu[2, 0] = dt * np.cos(self.x_bar[4, 0])
+        self.Gu[3, 0] = dt * np.sin(self.x_bar[4, 0])
         self.Gu[4, 1] = dt
         
         self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
@@ -50,4 +47,4 @@ class EKF:
         self.S = (np.eye(3) - self.K @ self.H) @ self.S_bar
         self.S_bar = self.S
         self.x_bar = self.x
-        return self.x[0, 0], self.x[1, 0], self.x[2, 0]
+        return self.x
