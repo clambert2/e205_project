@@ -31,14 +31,7 @@ class EKF:
         self.Q = np.eye(3)*0.1
         self.K = 1
 
-    def prediction(self, u, dt, is_turn=False, is_move=False):
-        a, w = u
-        if is_turn:
-            a = 0
-        if is_move:
-            w = 0
-        u = np.array([[a], [w]])
-        
+    def prediction(self, u, dt):        
         self.Gx[0, 2] = dt
         self.Gx[1, 3] = dt
         self.Gu[2, 0] = dt * np.cos(self.x[4, 0])
@@ -48,7 +41,7 @@ class EKF:
         self.x_bar = self.Gx @ self.x_bar + self.Gu @ u
         self.S_bar = self.Gx @ self.S_bar @ self.Gx.T + self.Gu @ self.R @ self.Gu.T
         
-        return self.x_bar[0, 0], self.x_bar[1, 0], self.x_bar[2, 0]
+        return self.x_bar
 
 
     def measurement_update(self, z):

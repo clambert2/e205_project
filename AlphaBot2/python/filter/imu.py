@@ -9,7 +9,7 @@ from adafruit_lsm6ds.lsm6ds3 import LSM6DS3
 from adafruit_bus_device.i2c_device import I2CDevice
 
 
-class IMUThread(threading.Thread):
+class Thread(threading.Thread):
     def __init__(self, imu, interval=0.05, max_queue_size=500):
         super().__init__()
         self.imu = imu
