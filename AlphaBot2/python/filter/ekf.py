@@ -31,6 +31,8 @@ class EKF:
     def prediction(self, u, dt):
         self.Gx[0, 2] = dt
         self.Gx[1, 3] = dt
+        self.Gx[2, 2] = 1
+        self.Gx[3, 3] = 1
         self.Gu[2, 0] = dt * np.cos(self.x_bar[4, 0])
         self.Gu[3, 0] = dt * np.sin(self.x_bar[4, 0])
         self.Gu[4, 1] = dt

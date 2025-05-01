@@ -1,4 +1,28 @@
 import math
+import numpy as np
+
+def rotation_matrix_from_vectors(v1, v2):
+    """
+    Returns the rotation matrix that aligns v1 to v2
+    using Rodrigues' rotation formula.
+    """
+    v1 = v1 / np.linalg.norm(v1)
+    v2 = v2 / np.linalg.norm(v2)
+    cross = np.cross(v1, v2)
+    dot = np.dot(v1, v2)
+    norm_cross = np.linalg.norm(cross)
+
+    if norm_cross == 0:
+        return np.eye(3)  # Vectors are already aligned
+
+    skew = np.array([
+        [0, -cross[2], cross[1]],
+        [cross[2], 0, -cross[0]],
+        [-cross[1], cross[0], 0]
+    ])
+
+    R = np.eye(3) + skew + skew @ skew * ((1 - dot) / (norm_cross ** 2))
+    return R
 
 def interpret_and_print_transform(matrix):
     """

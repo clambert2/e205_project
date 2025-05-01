@@ -54,6 +54,9 @@ print("Any free cells?", np.any(grid == 0))
 print("Min angle:", df["Angle"].min())
 print("Max angle:", df["Angle"].max())
 
+# === Save grid to CSV ===
+np.savetxt(folder_path + "occupancy_grid.csv", grid, delimiter=",", fmt="%d")
+
 # === Visualize Grid with Rays and Points ===
 plt.figure(figsize=(8, 8))
 plt.imshow(grid.T, cmap="grey", origin="lower")
