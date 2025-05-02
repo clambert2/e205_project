@@ -11,7 +11,7 @@ Frontier Search Guide
 '''
 
 # Load CSV file as occupancy grid
-grid = np.loadtxt('occupancy_grid.csv', delimiter=',')
+grid = np.loadtxt('occupancy_grid_output_3.csv', delimiter=',')
 
 print(grid)
 
@@ -24,11 +24,11 @@ for i in range(len(grid)):
                (j > 0 and grid[i][j-1] == -1) or \
                (j < len(grid[0])-1 and grid[i][j+1] == -1):
                 # Mark the cell as a frontier point (2)
-                grid[i][j] = 2
+                grid[i][j] = 4
 
 
 # Get coordinates of frontier points
-frontier_points = np.argwhere(grid == 2)
+frontier_points = np.argwhere(grid == 4)
 
 frontier_set = set(map(tuple, frontier_points))  # For O(1) lookups
 
@@ -74,11 +74,20 @@ middle_point = longest_group_sorted[mid_index]
 
 print(f"Middle point of longest frontier (by index): {middle_point}")
 
-# set the middle point to 3 in the grid
+
+
+#set the frotier cells back to 1
+for point in frontier_points:
+    grid[point[0]][point[1]] = 1
+
+    # set the middle point to 3 in the grid
 grid[middle_point[0]][middle_point[1]] = 3
 
+# make all numbers integers before saving
+grid = grid.astype(int)
+
 # save the modified grid to a new CSV file
-np.savetxt('occupancy_grid_with_end.csv', grid, delimiter=',')
+np.savetxt('occupancy_grid_with_end_3.csv', grid, delimiter=',')
 
 # Plot results
 plt.figure(figsize=(8, 8))

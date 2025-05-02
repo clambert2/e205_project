@@ -114,38 +114,9 @@ def main():
     lidar_thread = LidarThread(lidar, interval=1.0)
     lidar_thread.start()
 
-    # Initialize AlphaBot2
-    robot = AlphaBot2()
-    robot.PA = 30
-    robot.PB = 30
-
-    # Initialize Accelerometer
-    i2c = board.I2C()
-    accelerometer = LSM6DS3(i2c)
-
-    for i in range(1):
-        collect_lidar_scan(lidar_thread= lidar_thread,
-                           output_filename=f"lidar_move_and_scan_{i}.csv"
+    collect_lidar_scan(lidar_thread= lidar_thread,
+                           output_filename=f"lidar_move_and_scan_2.csv"
         )
-        time.sleep(1)
-        print("Move Forward")
-        robot.forward()
-        
-        # Log accelerometer data while moving forward
-        log_acceleration_data(
-            accelerometer,
-            duration=0.7,
-            interval=0.05,
-            filename=f"accel_move_and_scan_{i}.csv"
-        )
-
-        robot.stop()
-        time.sleep(0.5)
-        print("Turn Left")
-        robot.left()
-        time.sleep(0.15)
-        robot.stop()
-
     lidar_thread.stop()
     lidar.stop()
     lidar.stop_motor()
