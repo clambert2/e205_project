@@ -43,7 +43,6 @@ class PoseThread(threading.Thread):
     def run(self):
         self.last_time = time.time()
         while self.running:
-            print(time.time())
             self.u = np.zeros((2, 1))
             with self.lock:
                 if self.is_move:
@@ -55,12 +54,10 @@ class PoseThread(threading.Thread):
             timestamp = time.time()
             # dt = timestamp - self.last_time
             dt = self.interval
-            print("dt: ", dt)
             self.last_time = timestamp
             if not self.is_still:
                 self.ekf.prediction(self.u, dt)
             #print("Pose: ", self.pose)
-            print(time.time())
             time.sleep(self.interval)
 
     def robot_still(self):
@@ -84,14 +81,112 @@ class PoseThread(threading.Thread):
     def get_pose(self):
         with self.lock:
             return self.ekf.x_bar
-    
-    def get_pose_and_u(self):
-        with self.lock:
-            return self.ekf.x_bar, self.u
 
     def stop(self):
         self.running = False
         self.join()
+
+def control_PI(pose_thread, robot, target_forward=0.2, kp=100, ki=30, max_power=50, min_power=10, tolerance=0.01, is_turn=False, is_move=False):
+    if is_turn:
+        pose_thread.robot_turn()
+    elif is_move:
+        pose_thread.robot_move()
+    else:
+        pose_thread.robot_still()
+        return
+
+    pose_thread.robot_move()
+    integral_error = 0
+    while True:
+        pose = pose_thread.get_pose()
+        current_forward = pose[0, 0] if is_move else pose[4, 0]
+        error = target_forward - current_forward
+        integral_error += error * pose_thread.interval
+
+        if abs(error) < tolerance:
+            break
+
+        power = kp * error + ki * integral_error
+
+        power = max(min(power, max_power), -max_power)
+        if abs(power) < min_power:
+            power = min_power * np.sign(power)
+
+        robot.setMotor(-int(power), -int(power))
+        time.sleep(0.05)
+
+    robot.stop()
+    pose_thread.robot_still()
+
+def control_to_pose(pose_thread, robot, target_x, target_y, 
+                    kp_lin=100, ki_lin=30, 
+                    kp_ang=150, ki_ang=50,
+                    max_power=50, min_power=10, 
+                    pos_tolerance=0.01, ang_tolerance=0.05):
+    """
+    Moves the robot to a specified (x, y) target using sequential PI control:
+    1. Rotate to face the target.
+    2. Move forward to the target.
+    """
+
+    # ---- Phase 1: Rotate to face the target ----
+    pose_thread.robot_turn()
+    integral_error = 0
+
+    while True:
+        pose = pose_thread.get_pose()
+        x, y, theta = pose[0, 0], pose[1, 0], pose[4, 0]
+        desired_theta = np.arctan2(target_y - y, target_x - x)
+        error = (desired_theta - theta + np.pi) % (2 * np.pi) - np.pi
+        integral_error += error * pose_thread.interval
+
+        if abs(error) < ang_tolerance:
+            break
+
+        power = kp_ang * error + ki_ang * integral_error
+        power = max(min(power, max_power), -max_power)
+        if abs(power) < min_power:
+            power = min_power * np.sign(power)
+        if desired_theta > 0:
+            power = -power
+        robot.setMotor(int(power), -int(power))
+        time.sleep(pose_thread.interval)
+        print("theta: ", theta, " desired_theta: ", desired_theta, " error: ", error, " power: ", power)
+
+    robot.stop()
+
+    # ---- Phase 2: Move forward to the target ----
+    pose_thread.robot_move()
+    integral_error = 0
+
+    while True:
+        pose = pose_thread.get_pose()
+        x, y, theta = pose[0, 0], pose[1, 0], pose[4, 0]
+        dx = target_x - x
+        dy = target_y - y
+        distance = np.sqrt(dx**2 + dy**2)
+        error = distance
+        integral_error += error * pose_thread.interval
+
+        if distance < pos_tolerance:
+            break
+
+        power = kp_lin * error + ki_lin * integral_error
+        power = max(min(power, max_power), -max_power)
+        if abs(power) < min_power:
+            power = min_power * np.sign(power)
+
+        if power < 0:
+            power = -power
+
+        robot.setMotor(-int(power), -int(power))
+        time.sleep(pose_thread.interval)
+        print("distance: ", distance, " integral error: ", integral_error, " power: ", power)
+
+    robot.stop()
+    pose_thread.robot_still()
+
+
 
 
 if __name__=='__main__':
@@ -101,13 +196,13 @@ if __name__=='__main__':
     high_speed_thread.start()
 
     time.sleep(1)
-    print("pose: ", high_speed_thread.get_pose_and_u())
+    print("pose: ", high_speed_thread.get_pose())
 
-    high_speed_thread.robot_move()
-    ab2.setMotor(-15, -15)
-    time.sleep(2)
-    ab2.stop()
-    time.sleep(0.2)
-    high_speed_thread.robot_still()
-    print("pose: ", high_speed_thread.get_pose_and_u())
+    control_to_pose(high_speed_thread, ab2, 0.2, 0.2,
+                    kp_lin=5, ki_lin=2,
+                    kp_ang=10, ki_ang=2,
+                    max_power=30, min_power=10,
+                    pos_tolerance=0.06, ang_tolerance=0.2)
+
+    print("pose: ", high_speed_thread.get_pose())
     high_speed_thread.stop()
