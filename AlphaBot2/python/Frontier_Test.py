@@ -13,32 +13,78 @@ Frontier Search Guide
 # Load CSV file as occupancy grid
 grid = np.loadtxt('occupancy_grid.csv', delimiter=',')
 
-# Constants for cell types
-UNKNOWN = 0
-OCCUPIED = 127
-FREE = 255
+print(grid)
 
-# Frontier mask: 1 for frontier, 0 otherwise
-frontier_mask = np.zeros_like(grid, dtype=np.uint8)
+for i in range(len(grid)):
+    for j in range(len(grid[0])):
+        if grid[i][j] == 1:
+            # Check if any of the 4 sides are touching a black cell (-1)
+            if (i > 0 and grid[i-1][j] == -1) or \
+               (i < len(grid)-1 and grid[i+1][j] == -1) or \
+               (j > 0 and grid[i][j-1] == -1) or \
+               (j < len(grid[0])-1 and grid[i][j+1] == -1):
+                # Mark the cell as a frontier point (2)
+                grid[i][j] = 2
 
-# Get grid dimensions
-rows, cols = grid.shape
-
-# Check each cell (excluding the border to avoid index errors)
-for y in range(1, rows - 1):
-    for x in range(1, cols - 1):
-        if grid[y, x] == FREE:
-            neighborhood = grid[y-1:y+2, x-1:x+2].flatten()
-            if UNKNOWN in neighborhood and OCCUPIED not in neighborhood:
-                frontier_mask[y, x] = 1
 
 # Get coordinates of frontier points
-frontier_points = np.argwhere(frontier_mask == 1)
+frontier_points = np.argwhere(grid == 2)
+
+frontier_set = set(map(tuple, frontier_points))  # For O(1) lookups
+
+visited = set()
+longest_group = []
+
+# 8-connected directions (or use 8 for diagonals too)
+directions = [(-1, 0), (1, 0), (0, -1), (0, 1), (1,1), (-1, -1), (1, -1), (-1, 1)]
+
+def dfs(start):
+    stack = [start]
+    group = []
+    while stack:
+        current = stack.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+        group.append(current)
+        y, x = current
+        for dy, dx in directions:
+            neighbor = (y + dy, x + dx)
+            if neighbor in frontier_set and neighbor not in visited:
+                stack.append(neighbor)
+    return group
+
+# Search all points for the longest connected group
+for point in frontier_set:
+    if point not in visited:
+        group = dfs(point)
+        if len(group) > len(longest_group):
+            longest_group = group
+
+print(f"Longest frontier length: {len(longest_group)}")
+print("Coordinates:")
+print(longest_group)
+
+# Sort the group to ensure consistent order (optional but helps for visual logic)
+longest_group_sorted = sorted(longest_group)
+
+# Get the middle point by index
+mid_index = len(longest_group_sorted) // 2
+middle_point = longest_group_sorted[mid_index]
+
+print(f"Middle point of longest frontier (by index): {middle_point}")
+
+# set the middle point to 3 in the grid
+grid[middle_point[0]][middle_point[1]] = 3
+
+# save the modified grid to a new CSV file
+np.savetxt('occupancy_grid_with_end.csv', grid, delimiter=',')
 
 # Plot results
 plt.figure(figsize=(8, 8))
 plt.imshow(grid, cmap='gray', origin='lower')
 plt.scatter(frontier_points[:, 1], frontier_points[:, 0], c='red', s=5, label='Frontier')
+plt.scatter(middle_point[1], middle_point[0], c='blue', s=5, label='Middle Point', edgecolor='black')
 plt.title('Frontier Detection from CSV')
 plt.legend()
 plt.xlabel('X')
