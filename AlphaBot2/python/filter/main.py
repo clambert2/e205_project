@@ -17,7 +17,7 @@ if __name__=='__main__':
     ab2 = AlphaBot2()
     high_speed_thread = PoseThread(interval=0.01)
     high_speed_thread.start()
-    lidar = Lidar(port='/dev/ttyUSB0', baudrate=460800, interval=0.5)
+    lidar = Lidar(port='/dev/ttyUSB0', baudrate=460800, interval=1)
 
     time.sleep(1)
     # print("pose: ", high_speed_thread.get_pose())
