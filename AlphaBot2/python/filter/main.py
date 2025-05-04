@@ -7,186 +7,9 @@ import threading
 import numpy as np
 import utils
 from AlphaBot2 import AlphaBot2
-
-
-class PoseThread(threading.Thread):
-    def __init__(self, interval=0.005):
-        super().__init__()
-        self.is_still = True
-        self.is_turn = False
-        self.is_move = False
-        self.interval = interval
-        self.running = True
-        self.lock = threading.Lock()
-        self.alpha = 0.4
-
-        # SETUP IMU HERE
-        self.i2c = board.I2C()
-        self.imu = LSM6DS3(self.i2c)
-        self.ekf = EKF()
-        self.u = np.zeros((2, 1))
-        self.u_prev = np.zeros((2, 1))
-
-        with I2CDevice(self.i2c, 0x6A) as device:
-            # ACCEL: ODR = 104Hz (0b0100), FS = ±2g (0b00) => 0b01000000 = 0x40
-            device.write(bytes([0x10, 0x40]))
-
-            # GYRO: ODR = 104Hz (0b0100), FS = ±1000 dps (0b11) => 0b01001100 = 0x4C
-            device.write(bytes([0x11, 0x4C]))
-
-        # Zero the imu a values
-        still_meas = np.mean([self.imu.acceleration for _ in range(100)], axis=0)
-        expected_meas = np.array([0, 0, 9.81])
-        self.imu_calibration = utils.rotation_matrix_from_vectors(still_meas, expected_meas)
-
-
-    def run(self):
-        self.last_time = time.time()
-        while self.running:
-            self.u = np.zeros((2, 1))
-            with self.lock:
-                if self.is_move:
-                    self.u[0, 0] = (1-self.alpha)*self.u_prev[0, 0] + self.alpha*((self.imu_calibration @ self.imu.acceleration)[1])
-                elif self.is_turn:
-                    self.u[1, 0] = (1-self.alpha)*self.u_prev[1, 0] + self.alpha*self.imu.gyro[2]*8  # NOTE CONSTANT ADDED FOUND IN SCALING
-            self.u_prev = self.u.copy()
-            # print("u: ", self.u)
-            timestamp = time.time()
-            # dt = timestamp - self.last_time
-            dt = self.interval
-            self.last_time = timestamp
-            if not self.is_still:
-                self.ekf.prediction(self.u, dt)
-            #print("Pose: ", self.pose)
-            time.sleep(self.interval)
-
-    def robot_still(self):
-        with self.lock:
-            self.is_still = True
-            self.is_turn = False
-            self.is_move = False
-
-    def robot_move(self):
-        with self.lock:
-            self.is_still = False
-            self.is_turn = False
-            self.is_move = True
-
-    def robot_turn(self):
-        with self.lock:
-            self.is_still = False
-            self.is_turn = True
-            self.is_move = False
-
-    def get_pose(self):
-        with self.lock:
-            return self.ekf.x_bar
-
-    def stop(self):
-        self.running = False
-        self.join()
-
-def control_PI(pose_thread, robot, target_forward=0.2, kp=100, ki=30, max_power=50, min_power=10, tolerance=0.01, is_turn=False, is_move=False):
-    if is_turn:
-        pose_thread.robot_turn()
-    elif is_move:
-        pose_thread.robot_move()
-    else:
-        pose_thread.robot_still()
-        return
-
-    pose_thread.robot_move()
-    integral_error = 0
-    while True:
-        pose = pose_thread.get_pose()
-        current_forward = pose[0, 0] if is_move else pose[4, 0]
-        error = target_forward - current_forward
-        integral_error += error * pose_thread.interval
-
-        if abs(error) < tolerance:
-            break
-
-        power = kp * error + ki * integral_error
-
-        power = max(min(power, max_power), -max_power)
-        if abs(power) < min_power:
-            power = min_power * np.sign(power)
-
-        robot.setMotor(-int(power), -int(power))
-        time.sleep(0.05)
-
-    robot.stop()
-    pose_thread.robot_still()
-
-def control_to_pose(pose_thread, robot, target_x, target_y, 
-                    kp_lin=100, ki_lin=30, 
-                    kp_ang=150, ki_ang=50,
-                    max_power=50, min_power=10, 
-                    pos_tolerance=0.01, ang_tolerance=0.05):
-    """
-    Moves the robot to a specified (x, y) target using sequential PI control:
-    1. Rotate to face the target.
-    2. Move forward to the target.
-    """
-
-    # ---- Phase 1: Rotate to face the target ----
-    pose_thread.robot_turn()
-    integral_error = 0
-
-    while True:
-        pose = pose_thread.get_pose()
-        x, y, theta = pose[0, 0], pose[1, 0], pose[4, 0]
-        desired_theta = np.arctan2(target_y - y, target_x - x)
-        error = (desired_theta - theta + np.pi) % (2 * np.pi) - np.pi
-        integral_error += error * pose_thread.interval
-
-        if abs(error) < ang_tolerance:
-            break
-
-        power = kp_ang * error + ki_ang * integral_error
-        power = max(min(power, max_power), -max_power)
-        if abs(power) < min_power:
-            power = min_power * np.sign(power)
-        if desired_theta > 0:
-            power = -power
-        robot.setMotor(int(power), -int(power))
-        time.sleep(pose_thread.interval)
-        print("theta: ", theta, " desired_theta: ", desired_theta, " error: ", error, " power: ", power)
-
-    robot.stop()
-
-    # ---- Phase 2: Move forward to the target ----
-    pose_thread.robot_move()
-    integral_error = 0
-
-    while True:
-        pose = pose_thread.get_pose()
-        x, y, theta = pose[0, 0], pose[1, 0], pose[4, 0]
-        dx = target_x - x
-        dy = target_y - y
-        distance = np.sqrt(dx**2 + dy**2)
-        error = distance
-        integral_error += error * pose_thread.interval
-
-        if distance < pos_tolerance:
-            break
-
-        power = kp_lin * error + ki_lin * integral_error
-        power = max(min(power, max_power), -max_power)
-        if abs(power) < min_power:
-            power = min_power * np.sign(power)
-
-        if power < 0:
-            power = -power
-
-        robot.setMotor(-int(power), -int(power))
-        time.sleep(pose_thread.interval)
-        print("distance: ", distance, " integral error: ", integral_error, " power: ", power)
-
-    robot.stop()
-    pose_thread.robot_still()
-
-
+from control import control_to_pose
+from control import PoseThread
+from lidar import Lidar
 
 
 if __name__=='__main__':
@@ -194,6 +17,7 @@ if __name__=='__main__':
     ab2 = AlphaBot2()
     high_speed_thread = PoseThread(interval=0.01)
     high_speed_thread.start()
+    lidar = Lidar(port='/dev/ttyUSB0', baudrate=460800, interval=0.5)
 
     time.sleep(1)
     print("pose: ", high_speed_thread.get_pose())
@@ -205,4 +29,7 @@ if __name__=='__main__':
                     pos_tolerance=0.06, ang_tolerance=0.2)
 
     print("pose: ", high_speed_thread.get_pose())
+
+    print(lidar.get_scan(timeout=10.0, save_csv=False))
+
     high_speed_thread.stop()
