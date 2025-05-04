@@ -20,15 +20,15 @@ if __name__=='__main__':
     lidar = Lidar(port='/dev/ttyUSB0', baudrate=460800, interval=0.5)
 
     time.sleep(1)
-    print("pose: ", high_speed_thread.get_pose())
+    # print("pose: ", high_speed_thread.get_pose())
 
-    control_to_pose(high_speed_thread, ab2, 0.2, 0.2,
-                    kp_lin=5, ki_lin=2,
-                    kp_ang=10, ki_ang=2,
-                    max_power=30, min_power=10,
-                    pos_tolerance=0.06, ang_tolerance=0.2)
+    # control_to_pose(high_speed_thread, ab2, 0.2, 0.2,
+    #                 kp_lin=5, ki_lin=2,
+    #                 kp_ang=10, ki_ang=2,
+    #                 max_power=30, min_power=10,
+    #                 pos_tolerance=0.06, ang_tolerance=0.2)
 
-    print("pose: ", high_speed_thread.get_pose())
+    # print("pose: ", high_speed_thread.get_pose())
 
     print(lidar.get_scan(timeout=10.0, save_csv=False))
 
