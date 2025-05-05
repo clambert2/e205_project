@@ -10,7 +10,7 @@ origin = (grid_size // 2, grid_size // 2)  # center of the grid
 
 # === Load point cloud CSV ===
 # Format: confidence, angle (degrees), distance (mm)
-df = pd.read_csv("lidar_move_and_scan_3.csv", header=None, names=["Confidence", "Angle", "Dist"])
+df = pd.read_csv("report_scan_1.csv", header=None, names=["Confidence", "Angle", "Dist"])
 df = df.apply(pd.to_numeric, errors='coerce').dropna()
 df["Dist"] = df["Dist"] / 1000.0  # Convert mm to meters
 
@@ -30,7 +30,7 @@ grid = -np.ones((grid_size, grid_size), dtype=np.int8)  # -1 = unknown
 # === Ray trace for free space ===
 for gx, gy in grid_points:
     if 0 <= gx < grid_size and 0 <= gy < grid_size:
-        rr, cc = line(origin[1], origin[0], gy, gx)  # note: y, x
+        rr, cc = line(origin[1], origin[0], gx, gy)  # note: y, x
         rr = np.clip(rr, 0, grid_size - 1)
         cc = np.clip(cc, 0, grid_size - 1)
         grid[rr, cc] = 1  # mark free space
@@ -38,17 +38,17 @@ for gx, gy in grid_points:
 # === Mark occupied points ===
 for gx, gy in grid_points:
     if 0 <= gx < grid_size and 0 <= gy < grid_size:
-        grid[gy, gx] = 0  # mark occupied
+        grid[gx, gy] = 0  # mark occupied
 
 # === Set robot origin ===
 grid[origin[1], origin[0]] = 2  # mark origin with a 2
 
 # === Save to CSV ===
-np.savetxt("occupancy_grid_output_3.csv", grid, fmt="%d", delimiter=",")
+np.savetxt("report_grid_1.csv", grid, fmt="%d", delimiter=",")
 
 # === Plot ===
 plt.figure(figsize=(8, 8))
-plt.imshow(grid.T, cmap="gray", origin="lower")
+plt.imshow(grid, cmap="gray", origin="lower")
 # plt.plot(origin[0], origin[1], "ro", label="Robot Origin")
 plt.title("Occupancy Grid")
 plt.xlabel("X")

@@ -11,7 +11,7 @@ Frontier Search Guide
 '''
 
 # Load CSV file as occupancy grid
-grid = np.loadtxt('occupancy_grid_output_3.csv', delimiter=',')
+grid = np.loadtxt('report_grid_0.csv', delimiter=',')
 
 print(grid)
 
@@ -47,9 +47,9 @@ def dfs(start):
             continue
         visited.add(current)
         group.append(current)
-        y, x = current
+        x, y = current
         for dy, dx in directions:
-            neighbor = (y + dy, x + dx)
+            neighbor = (x + dx, y + dy)
             if neighbor in frontier_set and neighbor not in visited:
                 stack.append(neighbor)
     return group
@@ -87,7 +87,7 @@ grid[middle_point[0]][middle_point[1]] = 3
 grid = grid.astype(int)
 
 # save the modified grid to a new CSV file
-np.savetxt('occupancy_grid_with_end_3.csv', grid, delimiter=',')
+np.savetxt('report_frontier_0.csv', grid, delimiter=',')
 
 # Plot results
 plt.figure(figsize=(8, 8))
