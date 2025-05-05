@@ -14,11 +14,10 @@ from lidar import Lidar
 
 if __name__=='__main__':
     # Initialize the robot components
-    ab2 = AlphaBot2()
-    high_speed_thread = PoseThread(interval=0.01)
-    high_speed_thread.start()
     lidar = Lidar(port='/dev/ttyUSB0', baudrate=460800, interval=1)
-
+    ab2 = AlphaBot2()
+    # high_speed_thread = PoseThread(interval=0.01)
+    # high_speed_thread.start()
     time.sleep(1)
     # print("pose: ", high_speed_thread.get_pose())
 
@@ -31,5 +30,5 @@ if __name__=='__main__':
     # print("pose: ", high_speed_thread.get_pose())
 
     print(lidar.get_scan(timeout=10.0, save_csv=False))
-
-    high_speed_thread.stop()
+    lidar.stop()
+    # high_speed_thread.stop()

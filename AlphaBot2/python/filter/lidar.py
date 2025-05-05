@@ -22,13 +22,13 @@ class LidarThread(threading.Thread):
             scan = []
             start_time = time.time()
             while time.time() - start_time < self.interval:
-                try:
-                    new_scan, quality, angle, distance = next(self.measure_iter)
-                    if quality > 0:
-                        scan.append((quality, angle, distance))
-                except Exception as e:
-                    print("Lidar error:", e)
-                    break
+                # try:
+                new_scan, quality, angle, distance = next(self.measure_iter)
+                if quality > 0:
+                    scan.append((quality, angle, distance))
+                # except Exception as e:
+                #     print("Lidar error:", e)
+                #     break
 
             with self.lock:
                 self.latest_scan = scan
@@ -53,7 +53,6 @@ class Lidar:
         self.thread.start()
 
     def get_scan(self, timeout=10.0, save_csv=False, output_filename='scan.csv'):
-        print("Waiting for full 360° scan...")
         start_time = time.time()
         all_points = []
         angle_set = set()
