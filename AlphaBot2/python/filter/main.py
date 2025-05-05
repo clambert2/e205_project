@@ -9,12 +9,12 @@ import utils
 from AlphaBot2 import AlphaBot2
 from control import control_to_pose
 from control import PoseThread
-from lidar import Lidar
+from lidar import get_scan
+from rplidar import RPLidar
 
 
 if __name__=='__main__':
-    # Initialize the robot components
-    lidar = Lidar(port='/dev/ttyUSB0', baudrate=460800, interval=1)
+
     ab2 = AlphaBot2()
     # high_speed_thread = PoseThread(interval=0.01)
     # high_speed_thread.start()
@@ -29,6 +29,5 @@ if __name__=='__main__':
 
     # print("pose: ", high_speed_thread.get_pose())
 
-    print(lidar.get_scan(timeout=10.0, save_csv=False))
-    lidar.stop()
+    print(get_scan())
     # high_speed_thread.stop()
