@@ -9,8 +9,8 @@ from scipy.signal import butter, filtfilt
 
 # Load the CSV data
 folder_path = 'test_data/04_21_lidar/'
-df_lidar_0 = pd.read_csv(folder_path + 'lidar_move_and_scan_2.csv')
-df_lidar_1 = pd.read_csv(folder_path + 'lidar_move_and_scan_3.csv')
+df_lidar_0 = pd.read_csv('report_scan_1.csv')
+df_lidar_1 = pd.read_csv('report_scan_0.csv')
 df_accel = pd.read_csv(folder_path + 'accel_move_and_scan_0.csv')
 df_gyro = pd.read_csv(folder_path + 'gyro_move_and_scan_0.csv')
 
@@ -153,11 +153,14 @@ def interpret_and_print_transform(matrix):
     print(f"Rotation around Z (yaw): {angle_deg:.2f} degrees")
 
 # Run ICP
-THRESHOLD = 1000 # The maximum distance from point to point (set pretty high)
-trans_init = np.array([[ 0.000000e+00, -1.000000e+00,  0.000000e+00,  0.000000e+00],
-                       [ 1.000000e+00,  6.123234e-17,  0.000000e+00,  0.000000e+00],
-                       [ 0.000000e+00,  0.000000e+00,  1.000000e+00,  0.000000e+00],
-                       [ 0.000000e+00,  0.000000e+00,  0.000000e+00,  1.000000e+00]])
+THRESHOLD = 2000 # The maximum distance from point to point (set pretty high)
+theta = -105 * np.pi / 180  # Rotation angle in radians
+trans_init = np.array([
+    [np.cos(theta),        -np.sin(theta),  0.0,  0],
+    [np.sin(theta), np.cos(theta),        0.0, 0],
+    [ 0.0,        0.0,        1.0,    0.0],
+    [ 0.0,        0.0,        0.0,    1.0]
+])
 # add gyro and accel data to the transformation matrix
 # trans_init = np.array([[np.cos(rotate[2]), -np.sin(rotate[2]), 0, pos[0]],
 #                        [np.sin(rotate[2]), np.cos(rotate[2]), 0, 0],
